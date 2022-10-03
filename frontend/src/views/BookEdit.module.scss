@@ -1,0 +1,9 @@
+.menu {
+  :global(.menuItem-name):has(:focus) {
+
+    i,
+    input {
+      color: var(--color-blue);
+    }
+  }
+}

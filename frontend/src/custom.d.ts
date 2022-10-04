@@ -4,7 +4,7 @@ declare global {
     age: number
     name: string
   }
-  type Chapter = DataProps<main.Chapter> & { parentId?: Chapter['id']; children?: Chapter[] }
+  type Chapter = DataProps<any> & { parentId?: Chapter['id']; children?: Chapter[] }
   type Chapters = Chapter[]
   type JSONValue = null | boolean | string | number | JSONValue[] | Record<string, JSONValue>
 

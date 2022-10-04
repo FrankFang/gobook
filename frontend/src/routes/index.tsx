@@ -1,9 +1,9 @@
-import { Routes, Route, Outlet } from 'react-router-dom'
+import { Outlet, Route, Routes } from 'react-router-dom'
 import { App } from '../App'
 import { ArticleEdit } from '../views/ArticleEdit'
 import { BookEdit } from '../views/BookEdit'
 import { Empty } from '../views/Empty'
-import { Home } from '../views/Home'
+import { Home } from '../views/home/Home'
 export const createRoutes = () => {
   return (
     <Routes>

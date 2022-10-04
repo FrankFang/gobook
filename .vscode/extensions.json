@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // my extensions, ofc :P
+    "antfu.browse-lite",
+    "antfu.iconify",
+    "antfu.slidev",
+    "antfu.unocss",
+    "antfu.vite",
+    "antfu.where-am-i",
+    "lokalise.i18n-ally",
+
+    // themes & icons
+    "antfu.icons-carbon",
+    "antfu.theme-vitesse",
+    "file-icons.file-icons",
+    "sainnhe.gruvbox-material",
+
+    // life savers!
+    "dbaeumer.vscode-eslint",
+    "GitHub.copilot",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+  ]
+}

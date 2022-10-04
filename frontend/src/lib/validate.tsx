@@ -4,18 +4,20 @@ interface FData {
 type Rule<T> = {
   key: keyof T
   message: string
-} & ({ type: 'required' } | { type: 'pattern'; regex: RegExp } | { type: 'notEqual'; value: JSONValue })
+} & (
+  | { type: 'required' }
+  | { type: 'pattern'; regex: RegExp }
+  | { type: 'notEqual'; value: JSONValue }
+  | { type: 'notIncluded'; in: unknown[] }
+)
 type Rules<T> = Rule<T>[]
 export type ErrorsOf<F> = {
-  [k in keyof F]: string[]
+  [k in keyof F]?: string[];
 }
 export type { Rules, Rule, FData }
-export const validate = <T extends FData>(formData: T, rules: Rules<T>) => {
-  type Errors = {
-    [k in keyof T]?: string[]
-  }
-  const errors: Errors = {}
-  rules.map(rule => {
+export const validate = async <T extends FData>(formData: T, rules: Rules<T>) => {
+  const errors: ErrorsOf<T> = {}
+  for (const rule of rules) {
     const { key, type, message } = rule
     const value = formData[key]
     switch (type) {
@@ -37,10 +39,15 @@ export const validate = <T extends FData>(formData: T, rules: Rules<T>) => {
           errors[key]?.push(message)
         }
         break
+      case 'notIncluded':
+        if (!isEmpty(value) && rule.in.includes(value)) {
+          errors[key] = errors[key] ?? []
+          errors[key]?.push(message)
+        }
+        break
       default:
-        return
     }
-  })
+  }
   return errors
 }
 
@@ -48,15 +55,14 @@ function isEmpty(value: null | undefined | string | number | FData) {
   return value === null || value === undefined || value === ''
 }
 
-export function hasError(errors: Record<string, string[]>) {
-  // return Object.values(errors)
-  // .reduce((result, value) => result + value.length, 0) > 0
-  let result = false
-  for (const key in errors) {
-    if (errors[key]?.length > 0) {
-      result = true
-      break
-    }
-  }
-  return result
+type X = {
+  [k in string]?: string[];
+}
+export function hasError(errors: X) {
+  return (
+    Object.values(errors).reduce(
+      (result, value) => result + (value ? value.length : 0),
+      0,
+    ) > 0
+  )
 }

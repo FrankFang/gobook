@@ -1,7 +1,7 @@
 import { createStore } from '../shared/zustand-helper'
 
 type Store = {
-  chapter?: main.Chapter
+  chapter?: any
   setContent: (bookId?: string, chapter?: string, content?: string) => void
   fetchChapter: (bookId: string, chapterId: string) => void
 }

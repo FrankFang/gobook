@@ -1,17 +1,19 @@
+import type { db } from '../../wailsjs/go/models'
 import { createStore } from '../shared/zustand-helper'
 
-type State = {
-  bookForm: Partial<main.Book>
-  setBookForm: (book: Partial<main.Book>) => void
+type FormData = Partial<db.Book>
+
+interface State {
+  bookForm: FormData
+  setBookForm: (book: FormData) => void
+  resetBookForm: () => void
 }
 
 export const useBookForm = createStore<State>(set => ({
-  bookForm: {
-    path: '',
-    name: ''
-  },
+  bookForm: { name: '' },
   setBookForm: book =>
-    set(state => {
+    set((state) => {
       Object.assign(state.bookForm, book)
-    })
+    }),
+  resetBookForm: () => set({ bookForm: { name: '' } }),
 }))

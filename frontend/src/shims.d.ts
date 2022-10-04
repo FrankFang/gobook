@@ -9,9 +9,5 @@ declare module "react" {
 }
 
 declare global {
-  declare namespace main {
-    type Book = any;
-    type Chapter = any
-  }
   const LoadChapters = (p: any) => any
 }

@@ -31,12 +31,12 @@ type MenuItemProps = {
 type Path = number[];
 
 type State = {
-  book?: main.Book;
+  book?: any;
   chapters: Chapters;
 };
 type Actions = {
   updateChapter: (id: Chapter["id"], name: Chapter["name"]) => void;
-  fetchChapters: (book: main.Book) => void;
+  fetchChapters: (book: any) => void;
   appendChapter: (
     id: Chapter["id"],
     chapter: Partial<Omit<Chapter, "id">>
@@ -57,7 +57,7 @@ export const useChapters = createStore<Store>((set, get) => ({
       node.name = name;
     });
   },
-  fetchChapters: async (book: main.Book) => {
+  fetchChapters: async (book: any) => {
     const chapters = await LoadChapters({});
     const c = addParentId(chapters);
     if (c.length > 0) {

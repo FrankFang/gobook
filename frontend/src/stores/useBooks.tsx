@@ -1,33 +1,47 @@
-import { Greet } from '../../wailsjs/go/main/App'
+import { CreateBook, Greet, ListBooks } from '../../wailsjs/go/main/App'
 import { createStore } from '../shared/zustand-helper'
 
-type State = {
-  books: main.Book[]
-  createBook: (book: main.Book) => Promise<main.Book>
-  getBook: (id: string) => main.Book | undefined
-  findBook: (attrs: Partial<main.Book>) => main.Book | undefined
+interface State {
+  books: any[]
+  createBook: (book: any) => Promise<any>
+  getBook: (id: string) => any | undefined
+  findBook: (attrs: Partial<any>) => any | undefined
   removeBooks: () => Promise<void>
+  listBooks: () => Promise<any>
+  listingBooks: boolean
 }
 export const useBooks = createStore<State>((set, get) => ({
   books: [],
-  createBook: async b => {
-    const book = {} as any
-    set(state => {
+  listingBooks: false,
+  createBook: async (b) => {
+    const book = await CreateBook(b.name)
+    set((state) => {
       state.books.push(book)
     })
     return book
   },
   getBook: id => get().books.find(b => b.id === id),
-  findBook: (attrs: Partial<main.Book>) =>
+  findBook: (attrs: Partial<any>) =>
     get().books.find((b: any) => {
       return Object.keys(attrs).every(key => b[key] === (attrs as any)[key])
     }),
   removeBooks: async () => {
     // await RemoveBooks()
-    set(state => {
+    set((state) => {
       state.books = []
     })
-  }
+  },
+  listBooks: async () => {
+    set((state) => {
+      state.listingBooks = true
+    })
+    const books = await ListBooks()
+    set((state) => {
+      state.books = books
+      state.listingBooks = false
+    })
+  },
+
   // recoverBook: async (id: string) => {
   // }
 }))

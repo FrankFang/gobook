@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@iconify/json": "2.1.104",
@@ -16,7 +18,7 @@
     "@typescript-eslint/parser": "5.36.2",
     "@unocss/reset": "0.45.13",
     "axios": "0.27.2",
-    "eslint": "8.23.0",
+    "dayjs": "^1.11.5",
     "eslint-config-prettier": "8.5.0",
     "immer": "9.0.15",
     "prettier": "2.7.1",
@@ -32,6 +34,7 @@
     "zustand": "4.1.1"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^0.27.0",
     "@types/react": "18.0.17",
     "@types/react-dom": "18.0.6",
     "@unocss/core": "0.45.13",
@@ -41,6 +44,7 @@
     "@unocss/transformer-attributify-jsx": "0.45.13",
     "@unocss/vite": "0.45.13",
     "@vitejs/plugin-react": "2.0.1",
+    "eslint": "^8.24.0",
     "typescript": "4.8.2",
     "unocss": "0.45.13",
     "vite": "3.0.9"

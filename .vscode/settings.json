@@ -29,14 +29,8 @@
     {
       "previewLimit": 50,
       "driver": "SQLite",
-      "name": "book1",
-      "database": "${workspaceFolder:gobook}/gobook_data/6b5dc138-5d60-4610-9250-98da24341e76.db"
-    },
-    {
-      "previewLimit": 50,
-      "driver": "SQLite",
-      "name": "book2",
-      "database": "${workspaceFolder:gobook}/gobook_data/388dc0ca-ff3f-4533-aaef-829d0934d830.db"
+      "name": "gobook",
+      "database": "${workspaceFolder:gobook}/gobook_data/books.db"
     }
   ],
   "errorLens.enabledDiagnosticLevels": [

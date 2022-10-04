@@ -1,13 +1,13 @@
-import { CreateBook, Greet, ListBooks } from '../../wailsjs/go/main/App'
+import { CreateBook, DeleteBook, Greet, ListBooks } from '../../wailsjs/go/main/App'
 import type { db } from '../../wailsjs/go/models'
 import { createStore } from '../shared/zustand-helper'
 
 interface State {
   books: any[]
   createBook: (name: string) => Promise<any>
-  getBook: (id: string) => db.Book | undefined
+  getBook: (id: number) => db.Book | undefined
   findBook: (attrs: Partial<db.Book>) => db.Book | undefined
-  removeBooks: () => Promise<void>
+  deleteBook: (id: number) => Promise<void>
   listBooks: () => Promise<void>
   listingBooks: boolean
 }
@@ -26,9 +26,12 @@ export const useBooks = createStore<State>((set, get) => ({
     get().books.find((b: any) => {
       return Object.keys(attrs).every(key => b[key] === (attrs as any)[key])
     }),
-  removeBooks: async () => {
-    // await RemoveBooks()
-    set(state => { state.books = [] })
+  deleteBook: async (id: number) => {
+    await DeleteBook(id)
+    set(state => {
+      const index = state.books.findIndex(b => b.id === id)
+      state.books.splice(index, 1)
+    })
   },
   listBooks: async () => {
     set(state => { state.listingBooks = true })

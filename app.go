@@ -98,3 +98,14 @@ func (a *App) CreateBook(name string) (db.Book, error) {
 	}
 	return b, nil
 }
+func (a *App) DeleteBook(id int64) error {
+	q, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	err = q.DeleteBook(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}

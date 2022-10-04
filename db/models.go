@@ -16,6 +16,7 @@ type Book struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt sql.NullTime   `json:"updated_at"`
 	Summary   sql.NullString `json:"summary"`
+	DeletedAt sql.NullTime   `json:"deleted_at"`
 }
 
 type Chapter struct {

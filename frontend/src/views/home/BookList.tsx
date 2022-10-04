@@ -1,19 +1,18 @@
 import dayjs from 'dayjs'
 import * as React from 'react'
+import type { MouseEvent } from 'react'
 import { createContext, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToggle } from 'react-use'
 import type { db } from '../../../wailsjs/go/models'
 import { Button } from '../../components/Button'
+import { confirmable } from '../../shared/confirmable'
 import { useBooks } from '../../stores/useBooks'
 
 const EditModeContext = createContext<{
   editMode: boolean
   toggleEditMode: () => void
-}>({
-      editMode: false,
-      toggleEditMode: () => { throw new Error('not implemented') },
-    })
+}>({ editMode: false, toggleEditMode: () => { throw new Error('not implemented') } })
 
 export const BookList: React.FC = () => {
   const [editMode, toggleEditMode] = useToggle(false)
@@ -56,6 +55,12 @@ const Card: React.FC<CardProps> = ({ book }) => {
     nav(`/books/${book.id}/edit`)
   }
   const c = useContext(EditModeContext)
+  const { deleteBook } = useBooks()
+  const onDeleteBook = confirmable(async (e: MouseEvent, id: number) => {
+    e.stopPropagation()
+    await deleteBook(id)
+    alert('删除成功')
+  })
   return (
     <div shadow bg-white p-4 mt-4 hover-shadow-xl onClick={onClick}>
       <h2 text-2xl overflow-hidden>
@@ -65,7 +70,7 @@ const Card: React.FC<CardProps> = ({ book }) => {
         {book.summary?.substring?.(0, 100)}
       </p>
       <p color-gray flex justify-between items-center>{dayjs(book.created_at).format('YYYY-MM-DD HH:mm')}
-      { c.editMode && <Button size="small">删除</Button> }
+      { c.editMode && <Button size="small" onClick={e => onDeleteBook(e, book.id)}>删除</Button> }
       </p>
     </div>
   )

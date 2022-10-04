@@ -15,7 +15,7 @@ INSERT INTO books (
 ) VALUES (
   ?
 )
-RETURNING id, name, author, created_at, updated_at, summary
+RETURNING id, name, author, created_at, updated_at, summary, deleted_at
 `
 
 func (q *Queries) CreateBook(ctx context.Context, name string) (Book, error) {
@@ -28,12 +28,25 @@ func (q *Queries) CreateBook(ctx context.Context, name string) (Book, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Summary,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
+const deleteBook = `-- name: DeleteBook :exec
+UPDATE books
+SET deleted_at = date('now')
+WHERE id = ?
+`
+
+func (q *Queries) DeleteBook(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteBook, id)
+	return err
+}
+
 const listBooks = `-- name: ListBooks :many
-SELECT id, name, author, created_at, updated_at, summary FROM books
+SELECT id, name, author, created_at, updated_at, summary, deleted_at FROM books
+WHERE deleted_at IS NULL
 ORDER BY id
 LIMIT 10 OFFSET ?
 `
@@ -54,6 +67,7 @@ func (q *Queries) ListBooks(ctx context.Context, offset int64) ([]Book, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Summary,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}

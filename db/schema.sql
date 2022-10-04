@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS chapters (
   id   INTEGER PRIMARY KEY AUTOINCREMENT,
   name text    NOT NULL,
   book_id INTEGER NOT NULL,
-  content text
+  content text,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

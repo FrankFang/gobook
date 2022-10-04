@@ -12,7 +12,7 @@ interface State {
 export const useBookForm = createStore<State>(set => ({
   bookForm: { name: '' },
   setBookForm: book =>
-    set((state) => {
+    set(state => {
       Object.assign(state.bookForm, book)
     }),
   resetBookForm: () => set({ bookForm: { name: '' } }),

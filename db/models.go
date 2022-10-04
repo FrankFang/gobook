@@ -15,12 +15,14 @@ type Book struct {
 	Author    sql.NullString `json:"author"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt sql.NullTime   `json:"updated_at"`
+	Summary   sql.NullString `json:"summary"`
 }
 
 type Chapter struct {
-	ID        int64        `json:"id"`
-	Name      string       `json:"name"`
-	BookID    int64        `json:"book_id"`
-	Content   interface{}  `json:"content"`
-	UpdatedAt sql.NullTime `json:"updated_at"`
+	ID        int64          `json:"id"`
+	Name      string         `json:"name"`
+	BookID    int64          `json:"book_id"`
+	Content   sql.NullString `json:"content"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt sql.NullTime   `json:"updated_at"`
 }

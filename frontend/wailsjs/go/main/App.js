@@ -10,6 +10,6 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
-export function ListBooks() {
-  return window['go']['main']['App']['ListBooks']();
+export function ListBooks(arg1) {
+  return window['go']['main']['App']['ListBooks'](arg1);
 }

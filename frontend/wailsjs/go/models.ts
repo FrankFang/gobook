@@ -9,6 +9,8 @@ export namespace db {
 	    created_at: any;
 	    // Go type: sql.NullTime
 	    updated_at: any;
+	    // Go type: sql.NullString
+	    summary: any;
 	
 	    static createFrom(source: any = {}) {
 	        return new Book(source);
@@ -21,6 +23,7 @@ export namespace db {
 	        this.author = this.convertValues(source["author"], null);
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
+	        this.summary = this.convertValues(source["summary"], null);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

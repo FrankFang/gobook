@@ -3,11 +3,10 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToggle } from 'react-use'
 import type { db } from '../../../wailsjs/go/models'
-interface Props {
-  books: db.Book[]
-}
-export const BookList: React.FC<Props> = ({ books }) => {
+import { useBooks } from '../../stores/useBooks'
+export const BookList: React.FC = () => {
   const [editMode, toggleEditMode] = useToggle(false)
+  const { books } = useBooks()
   return (
     books?.length > 0
       ? <section mt-16>
@@ -44,9 +43,10 @@ const Card: React.FC<CardProps> = ({ book }) => {
         {book.name}
       </h2>
       <p h-3em text-gray line-clamp-2 mt-2 mb-2>
-        {book.content?.substring(0, 100)}
+        {book.summary?.substring?.(0, 100)}
       </p>
       <p color-gray>{dayjs(book.created_at).format('YYYY-MM-DD HH:mm')}</p>
     </div>
   )
 }
+

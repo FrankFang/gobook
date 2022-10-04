@@ -10,8 +10,6 @@ import (
 	"path"
 
 	_ "github.com/mattn/go-sqlite3"
-
-	"github.com/google/uuid"
 )
 
 //go:embed db/schema.sql
@@ -74,38 +72,22 @@ func createQuery(filename string) (*db.Queries, error) {
 }
 
 // Book API
-// TODO: 改成并发
-func (a *App) ListBooks() ([]db.Book, error) {
-	p, err := os.Getwd()
+func (a *App) ListBooks(page int64) ([]db.Book, error) {
+	if page == 0 {
+		page = 1
+	}
+	q, err := createQuery("books.db")
 	if err != nil {
 		return nil, err
 	}
-	files, err := os.ReadDir(path.Join(p, "gobook_data"))
+	books, err := q.ListBooks(ctx, (page-1)*10)
 	if err != nil {
 		return nil, err
-	}
-	var books []db.Book
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		if path.Ext(file.Name()) != ".db" {
-			continue
-		}
-		db, err := createQuery(file.Name())
-		if err != nil {
-			continue
-		}
-		book, err := db.GetFirstBook(ctx)
-		if err != nil {
-			continue
-		}
-		books = append(books, book)
 	}
 	return books, nil
 }
 func (a *App) CreateBook(name string) (db.Book, error) {
-	filename := uuid.New().String() + ".db"
+	filename := "books.db"
 	q, err := createQuery(filename)
 	if err != nil {
 		panic(err)

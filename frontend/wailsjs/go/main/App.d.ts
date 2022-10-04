@@ -6,4 +6,4 @@ export function CreateBook(arg1:string):Promise<db.Book>;
 
 export function Greet(arg1:string):Promise<string>;
 
-export function ListBooks():Promise<Array<db.Book>>;
+export function ListBooks(arg1:number):Promise<Array<db.Book>>;

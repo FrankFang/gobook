@@ -7,5 +7,7 @@ INSERT INTO books (
 RETURNING *;
 
 
--- name: GetFirstBook :one
-SELECT * FROM books LIMIT 1;
+-- name: ListBooks :many
+SELECT * FROM books
+ORDER BY id
+LIMIT 10 OFFSET ?;

@@ -9,3 +9,5 @@ export function DeleteBook(arg1:number):Promise<Error>;
 export function Greet(arg1:string):Promise<string>;
 
 export function ListBooks(arg1:number):Promise<Array<db.Book>>;
+
+export function ListChapters(arg1:number):Promise<Array<db.Chapter>>;

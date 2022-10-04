@@ -9,5 +9,4 @@ declare module "react" {
 }
 
 declare global {
-  const LoadChapters = (p: any) => any
 }

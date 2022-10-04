@@ -109,3 +109,16 @@ func (a *App) DeleteBook(id int64) error {
 	}
 	return nil
 }
+
+// Chapter API
+func (a *App) ListChapters(bookID int64) ([]db.Chapter, error) {
+	q, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	chapters, err := q.ListChapters(ctx, bookID)
+	if err != nil {
+		panic(err)
+	}
+	return chapters, nil
+}

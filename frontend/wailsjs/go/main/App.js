@@ -17,3 +17,7 @@ export function Greet(arg1) {
 export function ListBooks(arg1) {
   return window['go']['main']['App']['ListBooks'](arg1);
 }
+
+export function ListChapters(arg1) {
+  return window['go']['main']['App']['ListChapters'](arg1);
+}

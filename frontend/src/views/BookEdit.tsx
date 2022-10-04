@@ -8,7 +8,7 @@ import { useBook } from "../stores/useBook";
 
 export const BookEdit: React.FC = () => {
   const { book, fetch } = useBook();
-  const { bookId } = useParams<{ bookId: string; articleId: string }>();
+  const { bookId } = useParams<{ bookId: string; chapterId: string }>();
   useEffect(() => {
     fetch(bookId);
   }, []);

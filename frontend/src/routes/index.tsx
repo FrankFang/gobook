@@ -1,6 +1,6 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
 import { App } from '../App'
-import { ArticleEdit } from '../views/ArticleEdit'
+import { ChapterEdit } from '../views/ChapterEdit'
 import { BookEdit } from '../views/BookEdit'
 import { Empty } from '../views/Empty'
 import { Home } from '../views/home/Home'
@@ -16,9 +16,9 @@ export const createRoutes = () => {
             <Route path="edit" element={<BookEdit />}>
               <Route path="articles" element={<Outlet />}>
                 <Route index element={<Empty />} />
-                <Route path=":articleId" element={<Outlet />}>
+                <Route path=":chapterId" element={<Outlet />}>
                   <Route index element={<Empty />} />
-                  <Route path="edit" element={<ArticleEdit />} />
+                  <Route path="edit" element={<ChapterEdit />} />
                 </Route>
               </Route>
             </Route>

@@ -4,23 +4,22 @@ import { useEffect } from 'react'
 import { useParams, useRoutes } from 'react-router-dom'
 import { useDebounce } from 'react-use'
 import { useChapter } from '../stores/useChapter'
-export const ArticleEdit: React.FC = () => {
+export const ChapterEdit: React.FC = () => {
   const { fetchChapter, chapter, setContent } = useChapter()
-  const { bookId, articleId } = useParams<{ bookId: string; articleId: string }>()
+  const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>()
   useEffect(() => {
-    if (bookId === undefined || articleId === undefined)
-      return
-    fetchChapter(bookId, articleId)
-  }, [bookId, articleId])
+    if (bookId === undefined || chapterId === undefined) { return }
+    fetchChapter(bookId, chapterId)
+  }, [bookId, chapterId])
   const [, cancel] = useDebounce(
     () => {
-      // if (chapter?.content) SaveChapter(bookId!, articleId!, chapter.content)
+      // if (chapter?.content) SaveChapter(bookId!, chapterId!, chapter.content)
     },
     1000,
     [chapter?.content],
   )
   const onChange: ChangeEventHandler<HTMLTextAreaElement> = e => {
-    setContent(bookId, articleId, e.target.value)
+    setContent(bookId, chapterId, e.target.value)
   }
   return chapter
     ? (

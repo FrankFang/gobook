@@ -1,12 +1,14 @@
 import { CreateBook, DeleteBook, Greet, ListBooks } from '../../wailsjs/go/main/App'
-import type { db } from '../../wailsjs/go/models'
+import type { main } from '../../wailsjs/go/models'
+
 import { createStore } from '../shared/zustand-helper'
 
+type Book = main.Book
 interface State {
   books: any[]
   createBook: (name: string) => Promise<any>
-  getBook: (id: number) => db.Book | undefined
-  findBook: (attrs: Partial<db.Book>) => db.Book | undefined
+  getBook: (id: number) => Book | undefined
+  findBook: (attrs: Partial<Book>) => Book | undefined
   deleteBook: (id: number) => Promise<void>
   listBooks: () => Promise<void>
   listingBooks: boolean

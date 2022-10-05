@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"gobook/db"
 	"os"
 	"path"
 
@@ -16,23 +15,6 @@ import (
 var ddl string
 
 var ctx = context.Background()
-
-type Book struct {
-	ID        string `json:"id"`
-	Path      string `json:"path"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
-}
-type Chapters []*Chapter
-type Chapter struct {
-	ID       string   `json:"id"`
-	Level    int      `json:"-"`
-	Name     string   `json:"name"`
-	Content  string   `json:"content"`
-	Parent   *Chapter `json:"-"`
-	Children Chapters `json:"children"`
-}
 
 // App struct
 type App struct {
@@ -55,7 +37,7 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-func createQuery(filename string) (*db.Queries, error) {
+func createQuery(filename string) (*Queries, error) {
 	// 获取当前工作目录
 	p, _ := os.Getwd()
 	fullPath := path.Join(p, "gobook_data", filename)
@@ -68,11 +50,11 @@ func createQuery(filename string) (*db.Queries, error) {
 		return nil, err
 	}
 
-	return db.New(conn), nil
+	return New(conn), nil
 }
 
 // Book API
-func (a *App) ListBooks(page int64) ([]db.Book, error) {
+func (a *App) ListBooks(page int64) ([]Book, error) {
 	if page == 0 {
 		page = 1
 	}
@@ -86,7 +68,7 @@ func (a *App) ListBooks(page int64) ([]db.Book, error) {
 	}
 	return books, nil
 }
-func (a *App) CreateBook(name string) (db.Book, error) {
+func (a *App) CreateBook(name string) (Book, error) {
 	filename := "books.db"
 	q, err := createQuery(filename)
 	if err != nil {
@@ -109,9 +91,43 @@ func (a *App) DeleteBook(id int64) error {
 	}
 	return nil
 }
+func (a *App) GetBook(id int64) (Book, error) {
+	q, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	b, err := q.GetBook(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return b, nil
+}
+
+type BookWithChapters struct {
+	Book
+	Chapters []Chapter `json:"chapters"`
+}
+
+func (a *App) GetBookWithChapters(id int64) (bwc BookWithChapters, err error) {
+	q, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	b, err := q.GetBook(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	bwc.Book = b
+	chapters, err := q.ListChapters(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	bwc.Chapters = chapters
+	return bwc, nil
+}
 
 // Chapter API
-func (a *App) ListChapters(bookID int64) ([]db.Chapter, error) {
+func (a *App) ListChapters(bookID int64) ([]Chapter, error) {
 	q, err := createQuery("books.db")
 	if err != nil {
 		panic(err)

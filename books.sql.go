@@ -3,7 +3,7 @@
 //   sqlc v1.15.0
 // source: books.sql
 
-package db
+package main
 
 import (
 	"context"
@@ -42,6 +42,26 @@ WHERE id = ?
 func (q *Queries) DeleteBook(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteBook, id)
 	return err
+}
+
+const getBook = `-- name: GetBook :one
+SELECT id, name, author, created_at, updated_at, summary, deleted_at FROM books
+WHERE id = ? AND deleted_at IS NULL
+`
+
+func (q *Queries) GetBook(ctx context.Context, id int64) (Book, error) {
+	row := q.db.QueryRowContext(ctx, getBook, id)
+	var i Book
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Author,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Summary,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const listBooks = `-- name: ListBooks :many

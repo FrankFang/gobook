@@ -10,6 +10,14 @@ export function DeleteBook(arg1) {
   return window['go']['main']['App']['DeleteBook'](arg1);
 }
 
+export function GetBook(arg1) {
+  return window['go']['main']['App']['GetBook'](arg1);
+}
+
+export function GetBookWithChapters(arg1) {
+  return window['go']['main']['App']['GetBookWithChapters'](arg1);
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }

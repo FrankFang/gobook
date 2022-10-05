@@ -3,11 +3,10 @@
 //   sqlc v1.15.0
 // source: chapters.sql
 
-package db
+package main
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createChapter = `-- name: CreateChapter :one
@@ -20,13 +19,13 @@ INSERT INTO chapters (
   ?,
   ?
 )
-RETURNING id, name, book_id, content, created_at, updated_at
+RETURNING id, name, book_id, content, created_at, updated_at, parent_id, deleted_at
 `
 
 type CreateChapterParams struct {
-	BookID  int64          `json:"book_id"`
-	Name    string         `json:"name"`
-	Content sql.NullString `json:"content"`
+	BookID  int64   `json:"book_id"`
+	Name    string  `json:"name"`
+	Content *string `json:"content"`
 }
 
 func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error) {
@@ -39,6 +38,8 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ParentID,
+		&i.DeletedAt,
 	)
 	return i, err
 }
@@ -55,7 +56,7 @@ func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
 }
 
 const listChapters = `-- name: ListChapters :many
-SELECT id, name, book_id, content, created_at, updated_at FROM chapters
+SELECT id, name, book_id, content, created_at, updated_at, parent_id, deleted_at FROM chapters
 WHERE book_id = ?
 AND deleted_at IS NULL
 ORDER BY id
@@ -77,6 +78,8 @@ func (q *Queries) ListChapters(ctx context.Context, bookID int64) ([]Chapter, er
 			&i.Content,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ParentID,
+			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -96,13 +99,13 @@ UPDATE chapters
 SET name = coalesce(@name, name),
     content = coalesce(@content, content)
 WHERE id = ?
-RETURNING id, name, book_id, content, created_at, updated_at
+RETURNING id, name, book_id, content, created_at, updated_at, parent_id, deleted_at
 `
 
 type UpdateChapterParams struct {
-	Name    string         `json:"name"`
-	Content sql.NullString `json:"content"`
-	ID      int64          `json:"id"`
+	Name    string  `json:"name"`
+	Content *string `json:"content"`
+	ID      int64   `json:"id"`
 }
 
 func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (Chapter, error) {
@@ -115,6 +118,8 @@ func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (C
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ParentID,
+		&i.DeletedAt,
 	)
 	return i, err
 }

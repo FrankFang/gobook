@@ -1,7 +1,7 @@
-import type { db } from '../../wailsjs/go/models'
+import type { main } from '../../wailsjs/go/models'
 import { createStore } from '../shared/zustand-helper'
 
-type FormData = Partial<db.Book>
+type FormData = Partial<main.Book>
 
 interface State {
   bookForm: FormData

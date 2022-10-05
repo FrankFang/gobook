@@ -1,0 +1,4 @@
+ALTER TABLE chapters
+ADD COLUMN parent_id
+INTEGER DEFAULT 0
+NOT NULL;

@@ -23,7 +23,8 @@
     "source.organizeImports": false
   },
   "cSpell.words": [
-    "gobook"
+    "gobook",
+    "wailsjs"
   ],
   "sqltools.connections": [
     {

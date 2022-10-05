@@ -8,6 +8,40 @@ sql:
       - "db/queries"
     gen:
       go:
-        package: "db"
-        out: "db"
+        package: "main"
+        out: "."
         emit_json_tags: true
+        overrides:
+          - db_type: "text"
+            go_type:
+              type: "string"
+              pointer: true
+            nullable: true
+          - db_type: "INTEGER"
+            go_type:
+              type: "int64"
+              pointer: false
+            nullable: false
+          - db_type: "INTEGER"
+            go_type:
+              type: "int64"
+              pointer: true
+            nullable: true
+          - db_type: "DATE"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+            nullable: true
+          - db_type: "DATETIME"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+            nullable: true
+          - db_type: "TIMESTAMP"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+            nullable: true

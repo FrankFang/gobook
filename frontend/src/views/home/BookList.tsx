@@ -4,7 +4,7 @@ import type { MouseEvent } from 'react'
 import { createContext, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToggle } from 'react-use'
-import type { db } from '../../../wailsjs/go/models'
+import type { main } from '../../../wailsjs/go/models'
 import { Button } from '../../components/Button'
 import { confirmable } from '../../shared/confirmable'
 import { useBooks } from '../../stores/useBooks'
@@ -46,7 +46,7 @@ export const BookList: React.FC = () => {
 }
 
 interface CardProps {
-  book: db.Book
+  book: main.Book
 }
 
 const Card: React.FC<CardProps> = ({ book }) => {

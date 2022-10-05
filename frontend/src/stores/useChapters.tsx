@@ -10,7 +10,8 @@ import React, {
   useState,
 } from 'react'
 import { Collapse } from 'react-collapse'
-import { v4 as uuid } from 'uuid'
+import type { main } from '../../wailsjs/go/models'
+
 import { createStore } from '../shared/zustand-helper'
 
 interface TraverseParams {
@@ -31,6 +32,8 @@ type MenuItemProps = {
 } & Omit<TraverseParams, 'tree'>
 
 type Path = number[]
+type Chapter = main.Chapter
+type Chapters = Chapter[]
 
 interface State {
   book?: any
@@ -61,92 +64,92 @@ export const useChapters = createStore<Store>((set, get) => ({
     })
   },
   fetchChapters: async (book: any) => {
-    const chapters = await LoadChapters({})
-    const c = addParentId(chapters)
-    if (c.length > 0) {
-      set({ book, chapters: c })
-    }
-    else {
-      const newChapter = {} as any
-      set({ book, chapters: [newChapter] })
-    }
+    // const chapters = await LoadChapters({})
+    // const c = addParentId(chapters)
+    // if (c.length > 0) {
+    //   set({ book, chapters: c })
+    // }
+    // else {
+    //   const newChapter = {} as any
+    //   set({ book, chapters: [newChapter] })
+    // }
   },
   appendChapter: (id, chap) => {
-    const newId = uuid()
+    const newId = Math.random()
     set(state => {
-      const target = findChapterById(state.chapters, id)
-      if (target === undefined)
-        throw new Error('chapter not found')
+      // const target = findChapterById(state.chapters, id)
+      // if (target === undefined)
+      //   throw new Error('chapter not found')
 
-      const parent = findChapterById(state.chapters, target.parentId)
-      const children = parent?.children ?? state.chapters
-      const index = children.indexOf(target)
-      const c = {} as any
-      const c2 = addParentId([c])
-      children.splice(index + 1, 0, c2[0])
+      // const parent = findChapterById(state.chapters, target.parentId)
+      // const children = parent?.children ?? state.chapters
+      // const index = children.indexOf(target)
+      // const c = {} as any
+      // const c2 = addParentId([c])
+      // children.splice(index + 1, 0, c2[0])
     })
     return newId
   },
   removeChapter: id => {
     set(state => {
-      const target = findChapterById(state.chapters, id)
-      if (target === undefined)
-        throw new Error('chapter not found')
+      // const target = findChapterById(state.chapters, id)
+      // if (target === undefined)
+      //   throw new Error('chapter not found')
 
-      const parent = findChapterById(state.chapters, target.parentId)
-      const children = parent?.children ?? state.chapters
-      if (children.length <= 1)
-        return
+      // const parent = findChapterById(state.chapters, target.parentId)
+      // const children = parent?.children ?? state.chapters
+      // if (children.length <= 1)
+      //   return
 
-      const index = children.indexOf(target)
-      children.splice(index, 1)
+      // const index = children.indexOf(target)
+      // children.splice(index, 1)
     })
   },
   indentChapter: id => {
     set(state => {
-      const target = findChapterById(state.chapters, id)
-      if (target === undefined)
-        throw new Error('chapter not found')
+      // const target = findChapterById(state.chapters, id)
+      // if (target === undefined)
+      //   throw new Error('chapter not found')
 
-      const parent = findChapterById(state.chapters, target.parentId)
-      const siblings = parent?.children ?? state.chapters
-      const index = siblings.findIndex(c => c.id === id)
-      if (index === 0)
-        return
-      const bigBrother = siblings[index - 1]
-      bigBrother.children = bigBrother.children ?? []
-      bigBrother.children.push(target)
-      target.parentId = bigBrother.id
-      siblings.splice(index, 1)
+      // const parent = findChapterById(state.chapters, target.parentId)
+      // const siblings = parent?.children ?? state.chapters
+      // const index = siblings.findIndex(c => c.id === id)
+      // if (index === 0)
+      //   return
+      // const bigBrother = siblings[index - 1]
+      // bigBrother.children = bigBrother.children ?? []
+      // bigBrother.children.push(target)
+      // target.parentId = bigBrother.id
+      // siblings.splice(index, 1)
     })
   },
   unindentChapter: id => {
     set(state => {
-      const target = findChapterById(state.chapters, id)
-      if (target === undefined)
-        throw new Error('chapter not found')
-      if (target.parentId === undefined)
-        return
-      const parent = findChapterById(state.chapters, target.parentId)
-      if (parent === undefined)
-        throw new Error('chapter not found')
-      const siblings = parent.children
-      if (!siblings)
-        return
+      // const target = findChapterById(state.chapters, id)
+      // if (target === undefined)
+      //   throw new Error('chapter not found')
+      // if (target.parentId === undefined)
+      //   return
+      // const parent = findChapterById(state.chapters, target.parentId)
+      // if (parent === undefined)
+      //   throw new Error('chapter not found')
+      // const siblings = parent.children
+      // if (!siblings)
+      //   return
 
-      const index = siblings.findIndex(c => c.id === id)
-      const parentSiblings
-        = findChapterById(state.chapters, parent.parentId)?.children
-        ?? state.chapters
-      const parentIndex = parentSiblings.findIndex(c => c.id === parent.id)
-      parentSiblings.splice(parentIndex + 1, 0, target)
-      siblings.splice(index, 1)
-      target.parentId = parent.parentId
+      // const index = siblings.findIndex(c => c.id === id)
+      // const parentSiblings
+      //   = findChapterById(state.chapters, parent.parentId)?.children
+      //   ?? state.chapters
+      // const parentIndex = parentSiblings.findIndex(c => c.id === parent.id)
+      // parentSiblings.splice(parentIndex + 1, 0, target)
+      // siblings.splice(index, 1)
+      // target.parentId = parent.parentId
     })
   },
 }))
 
-function findChapterById(chapters: Chapters, id?: string): Chapter | undefined {
+function findChapterById(chapters: Chapters, id?: number): Chapter | undefined {
   if (id === undefined)
     return undefined
   for (const chapter of chapters) {
@@ -162,18 +165,19 @@ function findChapterById(chapters: Chapters, id?: string): Chapter | undefined {
 }
 
 function addParentId(chapters: Chapters, parent?: Chapter): Chapters {
-  return chapters?.map(chap => ({
-    ...chap,
-    parentId: parent?.id,
-    // children: addParentId(chap.children, chap),
-  }))
+  // return chapters?.map(chap => ({
+  //   ...chap,
+  //   parentId: parent?.id,
+  //   // children: addParentId(chap.children, chap),
+  // }))
+  return chapters
 }
 
-useChapters.subscribe((state, prevState) => {
-  if (!state.book)
-    return
-  // SaveChapters(state.book, state.chapters);
-})
+// useChapters.subscribe((state, prevState) => {
+//   if (!state.book)
+//     return
+//   // SaveChapters(state.book, state.chapters);
+// })
 
 export const renderBookContents = (params: TraverseParams) => {
   const { tree, focused, path = [], onInput, onSelect, onKeyDown } = params

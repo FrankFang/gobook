@@ -17,3 +17,7 @@ LIMIT 10 OFFSET ?;
 UPDATE books
 SET deleted_at = date('now')
 WHERE id = ?;
+
+-- name: GetBook :one
+SELECT * FROM books
+WHERE id = ? AND deleted_at IS NULL;

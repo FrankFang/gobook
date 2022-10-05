@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import unocss from '@unocss/vite'
-import presetAttributify from '@unocss/preset-attributify'
 import presetIcons from '@unocss/preset-icons'
 import presetUno from '@unocss/preset-uno'
 import colors from 'windicss/colors'
@@ -14,22 +13,21 @@ export default defineConfig({
         colors: {
           gray: {
             ...(colors.gray as Record<string | number, string>),
-            250: '#efefef'
-          }
-        }
+            250: '#efefef',
+          },
+        },
       },
       shortcuts: {},
       presets: [
         presetUno(),
-        presetAttributify(),
         presetIcons({
           extraProperties: {
-            display: 'inline-block',
-            'vertical-align': 'middle'
-          }
-        })
-      ]
+            'display': 'inline-block',
+            'vertical-align': 'middle',
+          },
+        }),
+      ],
     }),
-    react()
-  ]
+    react(),
+  ],
 })

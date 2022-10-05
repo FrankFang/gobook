@@ -1,5 +1,5 @@
 import { GetBookWithChapters } from '../../wailsjs/go/main/App'
-import type { main } from '../../wailsjs/go/models'
+import { main } from '../../wailsjs/go/models'
 
 import { createStore } from '../shared/zustand-helper'
 
@@ -14,13 +14,21 @@ export const useBook = createStore<State>((set, get) => ({
   chapters: [],
   fetchBook: async id => {
     if (id === undefined) { return }
-    const x = await GetBookWithChapters(id)
-    console.log(x)
-    // if (id === undefined) { return }
-    // const book = {}
-    // set(state => {
-    //   state.book = book
-    // })
+    const bwc = await GetBookWithChapters(id)
+    console.log('bwc')
+    console.log(bwc)
+    const { chapters, ...rest } = bwc
+    if (chapters?.length > 0) {
+      set({ book: new main.Book(rest), chapters })
+    }
+    else {
+      set({
+        book: new main.Book(rest),
+        chapters: [
+          new main.Chapter({ name: 'Chapter 1', content: '' }),
+        ],
+      })
+    }
   },
   updateBook: attrs => {
     set(state => {

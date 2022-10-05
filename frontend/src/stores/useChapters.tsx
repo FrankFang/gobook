@@ -26,7 +26,6 @@ type MenuItemProps = {
   value: string
   path: Path
   id: Chapter['id']
-  index: number
   hasChildren?: boolean
   children?: ReactNode
 } & Omit<TraverseParams, 'tree'>
@@ -179,42 +178,63 @@ function addParentId(chapters: Chapters, parent?: Chapter): Chapters {
 //   // SaveChapters(state.book, state.chapters);
 // })
 
-export const renderBookContents = (params: TraverseParams) => {
-  const { tree, focused, path = [], onInput, onSelect, onKeyDown } = params
-  return tree?.map((node, index) => [
-    <MenuItem
-      key={node.id}
-      path={path}
-      id={node.id}
-      focused={focused}
-      index={index}
-      value={node.name}
-      // hasChildren={node.children?.length > 0}
-      onKeyDown={onKeyDown}
-      onInput={onInput}
-      onSelect={onSelect}
-    >
-      {renderBookContents({
-        ...params,
-        // tree: node.children,
-        path: path.concat(index),
-      })}
-    </MenuItem>,
-  ])
+type Props = {
+  chapters: Chapters
+  path?: Path
+  focused?: Chapter['id']
+  onInput: (e: ChangeEvent<HTMLInputElement>, id: Chapter['id']) => void
+  onSelect?: (e: FocusEvent<HTMLInputElement>, id: Chapter['id']) => void
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, id: Chapter['id']) => void
+}
+type Node = Omit<Chapter, 'convertValues'> & {
+  children: Node[]
+}
+type Tree = Node[]
+function findNodeById(tree: Tree, id: Chapter['id']): Node | undefined {
+  for (const node of tree) {
+    if (node.id === id)
+      return node
+    if (node.children?.length > 0) {
+      const c = findNodeById(node.children, id)
+      if (c)
+        return c
+    }
+  }
+  return undefined
+}
+function chapters2tree(chapters: Chapters): Tree {
+  const tree: Tree = []
+  for (const chapter of chapters) {
+    const node: Node = { ...chapter, children: [] }
+    if (chapter.parent_id) {
+      const parent = findNodeById(tree, chapter.parent_id)
+      if (parent) { parent.children.push(node) }
+      else { throw new Error(`parent_id ${chapter.parent_id} 不存在`) }
+    }
+    else { tree.push(node) }
+  }
+  return tree
+}
+export const Chapters2: React.FC<Props> = props => {
+  const { chapters, focused, path = [], onInput, onSelect, onKeyDown } = props
+  const tree = chapters2tree(chapters)
+  const x = (tree: Tree, path: Path) => <>
+    {tree
+      ? tree.map(node => [
+      <MenuItem key={node.id ?? node.name} path={path} id={node.id} focused={focused}
+        value={node.name} onKeyDown={onKeyDown} onInput={onInput} onSelect={onSelect} >
+          {x(node.children, [...path, node.id])}
+      </MenuItem>,
+      ])
+      : null}
+  </>
+  return x(tree, path)
 }
 
 const MenuItem: React.FC<MenuItemProps> = props => {
   const {
-    index,
-    id,
-    path,
-    children,
-    hasChildren,
-    focused,
-    onInput,
-    onSelect,
-    onKeyDown,
-    value,
+    id, path, children, hasChildren, focused, onInput, onSelect,
+    onKeyDown, value,
   } = props
   const level = path.length
   const style = {
@@ -227,37 +247,18 @@ const MenuItem: React.FC<MenuItemProps> = props => {
   }, [focused])
   return (
     <div style={style} className="menuItem">
-      <label flex items-center className="menuItem-name">
+      <label py-4px flex items-center className="menuItem-name">
         {hasChildren
-          ? (
-              open
-                ? (
-            <i
-              i-bi-chevron-down
-              shrink-0
-              mr-4px
-              onClick={() => setOpen(false)}
-            />
-                  )
-                : (
-            <i
-              i-bi-chevron-right
-              shrink-0
-              mr-4px
-              onClick={() => setOpen(true)}
-            />
-                  )
-            )
-          : (
-          <i i-bi-record shrink-0 mr-4px />
-            )}
+          ? open
+            ? <i i-bi-chevron-down shrink-0 mr-4px
+                onClick={() => setOpen(false)} />
+            : <i i-bi-chevron-right shrink-0 mr-4px
+                onClick={() => setOpen(true)} />
+          : <i i-bi-record shrink-0 mr-4px />
+            }
         <input
-          ref={inputRef}
-          lh-24px
-          py-12px
-          text-18px
-          value={value}
-          shrink-1
+          ref={inputRef} lh-24px py-8px text-18px
+          value={value} shrink-1
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => onKeyDown?.(e, id)}
           onInput={(e: ChangeEvent<HTMLInputElement>) => onInput(e, id)}
           onFocus={(e: FocusEvent<HTMLInputElement>) => onSelect?.(e, id)}

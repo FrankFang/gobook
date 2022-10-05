@@ -5,6 +5,7 @@ import './assets/stylesheets/global.css'
 import 'virtual:uno.css'
 import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { createRoutes } from './routes'
+import './models-patch'
 
 const container = document.getElementById('root')
 
@@ -15,5 +16,5 @@ const routes = createRoutes()
 root.render(
   <React.StrictMode>
     <HashRouter>{routes}</HashRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 )

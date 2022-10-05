@@ -5,6 +5,7 @@ declare module "react" {
     block?: boolean;
     flex?: boolean;
     shadow?: boolean;
+    relative?: boolean;
   }
 }
 

@@ -10,10 +10,7 @@
     "typescriptreact",
     "vue",
     "html",
-    "markdown",
-    "json",
-    "jsonc",
-    "json5"
+    "markdown"
   ],
   "prettier.enable": false,
   "editor.formatOnSave": false,
@@ -24,6 +21,7 @@
   },
   "cSpell.words": [
     "gobook",
+    "Klass",
     "wailsjs"
   ],
   "sqltools.connections": [

@@ -1,4 +1,4 @@
-import { GetBookWithChapters } from '../../wailsjs/go/main/App'
+import { GetBookWithChapters, UpdateChapter } from '../../wailsjs/go/main/App'
 import { main } from '../../wailsjs/go/models'
 
 import { createStore } from '../shared/zustand-helper'
@@ -7,7 +7,7 @@ interface State {
   book?: main.Book
   chapters: main.Chapter[]
   fetchBook: (id?: number) => void
-  updateBook: (attrs: Partial<any>) => void
+  updateChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
 }
 export const useBook = createStore<State>((set, get) => ({
   book: undefined,
@@ -15,8 +15,6 @@ export const useBook = createStore<State>((set, get) => ({
   fetchBook: async id => {
     if (id === undefined) { return }
     const bwc = await GetBookWithChapters(id)
-    console.log('bwc')
-    console.log(bwc)
     const { chapters, ...rest } = bwc
     if (chapters?.length > 0) {
       set({ book: new main.Book(rest), chapters })
@@ -30,10 +28,12 @@ export const useBook = createStore<State>((set, get) => ({
       })
     }
   },
-  updateBook: attrs => {
+  async updateChapter(id, attrs) {
+    const patch = Object.assign({}, get().chapters.find(c => c.id === id), attrs)
+    const newC = await UpdateChapter({ ...patch, id })
     set(state => {
-      if (state.book)
-        Object.assign(state.book, attrs)
+      const c = state.chapters.find(c => c.id === id)!
+      Object.assign(c, newC)
     })
   },
 }))

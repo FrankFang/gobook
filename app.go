@@ -138,3 +138,15 @@ func (a *App) ListChapters(bookID int64) ([]Chapter, error) {
 	}
 	return chapters, nil
 }
+
+func (a *App) UpdateChapter(u UpdateChapterParams) (Chapter, error) {
+	q, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	chapter, err := q.UpdateChapter(ctx, u)
+	if err != nil {
+		panic(err)
+	}
+	return chapter, nil
+}

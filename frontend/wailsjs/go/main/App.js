@@ -29,3 +29,7 @@ export function ListBooks(arg1) {
 export function ListChapters(arg1) {
   return window['go']['main']['App']['ListChapters'](arg1);
 }
+
+export function UpdateChapter(arg1) {
+  return window['go']['main']['App']['UpdateChapter'](arg1);
+}

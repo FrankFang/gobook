@@ -7,4 +7,7 @@ declare global {
 
   type DataKeys<T> = { [K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K }[keyof T]
   type DataProps<T> = Pick<T, DataKeys<T>>
+
+  type Chapter = main.Chapter
+  type Path = number[]
 }

@@ -15,3 +15,5 @@ export function Greet(arg1:string):Promise<string>;
 export function ListBooks(arg1:number):Promise<Array<main.Book>>;
 
 export function ListChapters(arg1:number):Promise<Array<main.Chapter>>;
+
+export function UpdateChapter(arg1:main.UpdateChapterParams):Promise<main.Chapter>;

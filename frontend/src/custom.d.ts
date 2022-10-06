@@ -9,5 +9,6 @@ declare global {
   type DataProps<T> = Pick<T, DataKeys<T>>
 
   type Chapter = main.Chapter
+  type Chapters = Chapter[]
   type Path = number[]
 }

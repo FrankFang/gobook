@@ -22,6 +22,7 @@
   "cSpell.words": [
     "gobook",
     "Klass",
+    "unocss",
     "wailsjs"
   ],
   "sqltools.connections": [
@@ -40,5 +41,46 @@
     "cSpell",
     "Grammarly",
     "eslint"
-  ]
+  ],
+  "presentation-mode.configBackup": {
+    "editor.minimap.enabled": "undefined",
+    "editor.scrollbar.verticalScrollbarSize": 0,
+    "workbench.activityBar.visible": true,
+    "workbench.statusBar.visible": false,
+    "window.zoomLevel": 1
+  },
+  "editor.scrollbar.verticalScrollbarSize": 0,
+  "workbench.activityBar.visible": true,
+  "workbench.statusBar.visible": false,
+  "window.zoomLevel": 2,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": false,
+    "**/Thumbs.db": true,
+    "**/.classpath": true,
+    "**/.factorypath": true,
+    "**/.history": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/*.acn": true,
+    "**/*.acr": true,
+    "**/*.alg": true,
+    "**/*.aux": true,
+    "**/*.bcf": true,
+    "**/*.glg2": true,
+    "**/*.glo2": true,
+    "**/*.gls2": true,
+    "**/*.ist": true,
+    "**/*.log": true,
+    "**/*.run.xml": true,
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "explorerExclude.backup": {
+
+  },
+  "editor.minimap.enabled": false
 }

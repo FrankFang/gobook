@@ -7,7 +7,8 @@ interface State {
   book?: main.Book
   chapters: main.Chapter[]
   fetchBook: (id?: number) => void
-  updateChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
+  updateLocalChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
+  updateRemoteChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
 }
 export const useBook = createStore<State>((set, get) => ({
   book: undefined,
@@ -28,12 +29,18 @@ export const useBook = createStore<State>((set, get) => ({
       })
     }
   },
-  async updateChapter(id, attrs) {
+  updateLocalChapter(id, attrs) {
+    set(state => {
+      const chapter = state.chapters.find(c => c.id === id)!
+      Object.assign(chapter, attrs)
+    })
+  },
+  updateRemoteChapter: async (id, attrs) => {
     const patch = Object.assign({}, get().chapters.find(c => c.id === id), attrs)
     const newC = await UpdateChapter({ ...patch, id })
     set(state => {
-      const c = state.chapters.find(c => c.id === id)!
-      Object.assign(c, newC)
+      const chapter = state.chapters.find(c => c.id === id)!
+      Object.assign(chapter, newC)
     })
-  },
+  }
 }))

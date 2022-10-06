@@ -14,7 +14,7 @@ type Chapter = main.Chapter
 
 export const BookEdit: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>()
-  const { book, chapters, updateChapter, fetchBook } = useBook()
+  const { book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
     fetchBook(parseInt(bookId))
@@ -38,7 +38,9 @@ export const BookEdit: React.FC = () => {
             <Header>撰写</Header>
             <div grow-1 overflow-auto h-full shadow shadow-inset>
               <ChapterList chapters={chapters} focused={focused}
-              onInput={(e, id) => updateChapter(id, { name: e.target.value }) }/>
+                onInput={(e, id) => updateLocalChapter(id, { name: e.target.value }) }
+                onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
+              />
               {/* {renderBookContents({
                 tree: chapters,
                 focused,

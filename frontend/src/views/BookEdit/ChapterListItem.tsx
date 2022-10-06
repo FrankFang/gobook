@@ -1,22 +1,35 @@
-import type { ChangeEvent, FocusEvent, KeyboardEvent } from 'react'
+import type { ChangeEvent, FocusEvent, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Collapse } from 'react-collapse'
-import type { ChapterListItemProps } from '../../stores/useChapters'
+import { useDebounce } from 'react-use'
+import type { ChapterListProps } from './ChapterList'
+
+export type ChapterListItemProps = {
+  value: string
+  path: Path
+  id: Chapter['id']
+  hasChildren: boolean
+  children?: ReactNode
+} & Omit<ChapterListProps, 'chapters'>
 
 export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const {
-    id, path, children, hasChildren, focused, onInput, onSelect,
-    onKeyDown, value,
+    id, path, children, hasChildren, focused, onInput: _onInput, onSelect, onKeyDown, value,
+    onDebouncedChange
   } = props
   const level = path.length
-  const style = {
-    paddingLeft: `${16 + level * 4}px`,
-  }
+  const style = { paddingLeft: `${16 + level * 4}px` }
   const [open, setOpen] = useState(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [focused])
+  useEffect(() => { inputRef.current?.focus() }, [focused])
+  const [lastChange, setLastChange] = useState<Date>()
+  useDebounce(() => {
+    onDebouncedChange?.(id, value)
+  }, 300, [lastChange])
+  const onInput: ChapterListItemProps['onInput'] = (e, id) => {
+    _onInput(e, id)
+    setLastChange(new Date())
+  }
   return (
     <div style={style} className="menuItem">
       <label py-4px flex items-center className="menuItem-name">

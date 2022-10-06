@@ -14,21 +14,6 @@ import type { main } from '../../wailsjs/go/models'
 
 import { createStore } from '../shared/zustand-helper'
 
-interface TraverseParams {
-  tree: Chapters
-  path?: Path
-  focused?: Chapter['id']
-  onInput: (e: ChangeEvent<HTMLInputElement>, id: Chapter['id']) => void
-  onSelect?: (e: FocusEvent<HTMLInputElement>, id: Chapter['id']) => void
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, id: Chapter['id']) => void
-}
-export type ChapterListItemProps = {
-  value: string
-  path: Path
-  id: Chapter['id']
-  hasChildren: boolean
-  children?: ReactNode
-} & Omit<TraverseParams, 'tree'>
 
 type Chapter = main.Chapter
 type Chapters = Chapter[]

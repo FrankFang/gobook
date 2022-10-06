@@ -16,5 +16,6 @@ const routes = createRoutes()
 root.render(
   <React.StrictMode>
     <HashRouter>{routes}</HashRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 )
+

@@ -6,26 +6,26 @@ type Chapters = Chapter[]
 type Node = Omit<Chapter, 'convertValues'> & { children: Node[] }
 type Tree = Node[]
 
-type Props = {
+export type ChapterListProps = {
   chapters: Chapter[]
   path?: Path
   focused?: Chapter['id']
   onInput: (e: ChangeEvent<HTMLInputElement>, id: Chapter['id']) => void
   onSelect?: (e: FocusEvent<HTMLInputElement>, id: Chapter['id']) => void
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, id: Chapter['id']) => void
+  onDebouncedChange?: (id: Chapter['id'], name: Chapter['name']) => void
 }
 
-export const ChapterList: React.FC<Props> = props => {
-  const { chapters, focused, path = [], onInput, onSelect, onKeyDown } = props
+export const ChapterList: React.FC<ChapterListProps> = props => {
+  const { chapters, path = [], ...rest } = props
   const tree = chapters2tree(chapters)
   const renderChapters = (tree: Tree, path: Path) => <>
     {tree
       ? tree.map(node => [
-      <ChapterListItem key={node.id ?? node.name} path={path} id={node.id} focused={focused}
-        hasChildren={node.children?.length > 0}
-        value={node.name} onKeyDown={onKeyDown} onInput={onInput} onSelect={onSelect} >
-          {renderChapters(node.children, [...path, node.id])}
-      </ChapterListItem>,
+        <ChapterListItem key={node.id ?? node.name} path={path} id={node.id}
+          hasChildren={node.children?.length > 0} value={node.name} {...rest} >
+            {renderChapters(node.children, [...path, node.id])}
+        </ChapterListItem>
       ])
       : null}
   </>

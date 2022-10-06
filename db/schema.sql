@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS books (
   name text,
   author text,
   summary text,
-  max_chapter_sequence float DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at DATETIME,
   deleted_at DATETIME

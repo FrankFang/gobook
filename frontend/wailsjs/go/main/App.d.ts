@@ -14,6 +14,8 @@ export function GetBookWithChapters(arg1:number):Promise<main.BookWithChapters>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function InsertChapterAfter(arg1:number,arg2:main.CreateChapterParams):Promise<main.Chapter>;
+
 export function ListBooks(arg1:number):Promise<Array<main.Book>>;
 
 export function ListChapters(arg1:number):Promise<Array<main.Chapter>>;

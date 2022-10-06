@@ -71,28 +71,22 @@ func (a *App) ListBooks(page int64) ([]Book, error) {
 
 func (a *App) CreateBook(name *string) (Book, error) {
 	filename := "books.db"
-	q, sdb, err := createQuery(filename)
+	q, _, err := createQuery(filename)
 	if err != nil {
 		panic(err)
 	}
-	tx, err := sdb.Begin()
 	if err != nil {
-		return err
+		return Book{}, err
 	}
-	defer tx.Rollback()
-	qtx := q.WithTx(tx)
-	b, err := qtx.CreateBook(ctx, name)
+	b, err := q.CreateBook(ctx, name)
 	if err != nil {
 		panic(err)
 	}
-	if _, err = qtx.CreateChapter(ctx, CreateChapterParams{
+	if _, err = a.CreateChapter(CreateChapterParams{
 		BookID:  &b.ID,
 		Name:    Ptr("第一章"),
 		Content: Ptr("请开始你的创作"),
 	}); err != nil {
-		panic(err)
-	}
-	if err = tx.Commit(); err != nil {
 		panic(err)
 	}
 	return b, nil
@@ -173,11 +167,62 @@ func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 	if err != nil {
 		panic(err)
 	}
+	r, err := q.CalcMaxSequence(ctx, CalcMaxSequenceParams{
+		BookID:   c.BookID,
+		ParentID: c.ParentID,
+	})
+	if err != nil {
+		panic(err)
+	}
+	max := 0.0
+	if r != nil {
+		if rFloat, ok := r.(float64); ok {
+			max = rFloat
+		}
+	}
+	c.Sequence = Ptr(max + 1)
 	chapter, err := q.CreateChapter(ctx, c)
 	if err != nil {
 		panic(err)
 	}
 	return chapter, nil
+}
+
+func (a *App) InsertChapterAfter(chapterID int64, c CreateChapterParams) (Chapter, error) {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	c1, err := q.GetChapter(ctx, chapterID)
+	if err != nil {
+		panic(err)
+	}
+	bookID := c1.BookID
+	seqs, err := q.CalcNextSequence(ctx, CalcNextSequenceParams{
+		BookID:   bookID,
+		ParentID: c1.ParentID,
+		Sequence: c1.Sequence,
+	})
+	if err != nil {
+		panic(err)
+	}
+	seq := 0.0
+	if len(seqs) > 0 {
+		seq = (*c1.Sequence + *seqs[0]) / 2
+	} else {
+		seq = *c1.Sequence + 1.0
+	}
+	newChapter, err := a.CreateChapter(CreateChapterParams{
+		BookID:   bookID,
+		ParentID: c1.ParentID,
+		Name:     c.Name,
+		Content:  c.Content,
+		Sequence: Ptr(seq),
+	})
+	if err != nil {
+		panic(err)
+	}
+	return newChapter, nil
 }
 
 // helpers

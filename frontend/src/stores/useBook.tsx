@@ -1,4 +1,4 @@
-import { GetBookWithChapters, UpdateChapter } from '../../wailsjs/go/main/App'
+import { GetBookWithChapters, InsertChapterAfter, UpdateChapter } from '../../wailsjs/go/main/App'
 import { main } from '../../wailsjs/go/models'
 
 import { createStore } from '../shared/zustand-helper'
@@ -45,6 +45,10 @@ export const useBook = createStore<State>((set, get) => ({
     })
   },
   appendChapter: async (id, attrs) => {
-    return 0
+    debugger
+    const chapter = await InsertChapterAfter(id, attrs)
+    set(state => {
+      state.chapters.push(chapter)
+    })
   }
 }))

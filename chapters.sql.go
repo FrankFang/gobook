@@ -9,13 +9,69 @@ import (
 	"context"
 )
 
+const calcMaxSequence = `-- name: CalcMaxSequence :one
+SELECT MAX(sequence) AS max_sequence FROM chapters
+WHERE book_id = ? AND parent_id = ? AND deleted_at IS NULL
+`
+
+type CalcMaxSequenceParams struct {
+	BookID   *int64 `json:"book_id"`
+	ParentID *int64 `json:"parent_id"`
+}
+
+func (q *Queries) CalcMaxSequence(ctx context.Context, arg CalcMaxSequenceParams) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, calcMaxSequence, arg.BookID, arg.ParentID)
+	var max_sequence interface{}
+	err := row.Scan(&max_sequence)
+	return max_sequence, err
+}
+
+const calcNextSequence = `-- name: CalcNextSequence :many
+SELECT sequence FROM chapters
+WHERE book_id = ? AND parent_id = ?  AND deleted_at IS NULL
+AND sequence > ?
+ORDER BY sequence
+LIMIT 1
+`
+
+type CalcNextSequenceParams struct {
+	BookID   *int64   `json:"book_id"`
+	ParentID *int64   `json:"parent_id"`
+	Sequence *float64 `json:"sequence"`
+}
+
+func (q *Queries) CalcNextSequence(ctx context.Context, arg CalcNextSequenceParams) ([]*float64, error) {
+	rows, err := q.db.QueryContext(ctx, calcNextSequence, arg.BookID, arg.ParentID, arg.Sequence)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*float64
+	for rows.Next() {
+		var sequence *float64
+		if err := rows.Scan(&sequence); err != nil {
+			return nil, err
+		}
+		items = append(items, sequence)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createChapter = `-- name: CreateChapter :one
 INSERT INTO chapters (
   book_id,
   name,
   content,
-  parent_id
+  parent_id,
+  sequence
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,
@@ -25,10 +81,11 @@ RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_a
 `
 
 type CreateChapterParams struct {
-	BookID   *int64  `json:"book_id"`
-	Name     *string `json:"name"`
-	Content  *string `json:"content"`
-	ParentID *int64  `json:"parent_id"`
+	BookID   *int64   `json:"book_id"`
+	Name     *string  `json:"name"`
+	Content  *string  `json:"content"`
+	ParentID *int64   `json:"parent_id"`
+	Sequence *float64 `json:"sequence"`
 }
 
 func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error) {
@@ -37,6 +94,7 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 		arg.Name,
 		arg.Content,
 		arg.ParentID,
+		arg.Sequence,
 	)
 	var i Chapter
 	err := row.Scan(
@@ -62,6 +120,27 @@ WHERE id = ?
 func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteChapter, id)
 	return err
+}
+
+const getChapter = `-- name: GetChapter :one
+SELECT id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at FROM chapters WHERE id = ? AND deleted_at IS NULL
+`
+
+func (q *Queries) GetChapter(ctx context.Context, id int64) (Chapter, error) {
+	row := q.db.QueryRowContext(ctx, getChapter, id)
+	var i Chapter
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.BookID,
+		&i.ParentID,
+		&i.Sequence,
+		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
 
 const listChapters = `-- name: ListChapters :many
@@ -107,19 +186,26 @@ func (q *Queries) ListChapters(ctx context.Context, bookID *int64) ([]Chapter, e
 const updateChapter = `-- name: UpdateChapter :one
 UPDATE chapters
 SET name = coalesce(@name, name),
+    sequence = coalesce(@sequence, sequence),
     content = coalesce(@content, content)
 WHERE id = ?
 RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
 
 type UpdateChapterParams struct {
-	Name    *string `json:"name"`
-	Content *string `json:"content"`
-	ID      int64   `json:"id"`
+	Name     *string  `json:"name"`
+	Sequence *float64 `json:"sequence"`
+	Content  *string  `json:"content"`
+	ID       int64    `json:"id"`
 }
 
 func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (Chapter, error) {
-	row := q.db.QueryRowContext(ctx, updateChapter, arg.Name, arg.Content, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateChapter,
+		arg.Name,
+		arg.Sequence,
+		arg.Content,
+		arg.ID,
+	)
 	var i Chapter
 	err := row.Scan(
 		&i.ID,

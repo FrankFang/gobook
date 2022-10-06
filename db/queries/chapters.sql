@@ -4,13 +4,29 @@ WHERE book_id = ?
 AND deleted_at IS NULL
 ORDER BY id;
 
+-- name: GetChapter :one
+SELECT * FROM chapters WHERE id = ? AND deleted_at IS NULL;
+
+-- name: CalcMaxSequence :one
+SELECT MAX(sequence) AS max_sequence FROM chapters
+WHERE book_id = ? AND parent_id = ? AND deleted_at IS NULL;
+
+-- name: CalcNextSequence :many
+SELECT sequence FROM chapters
+WHERE book_id = ? AND parent_id = ?  AND deleted_at IS NULL
+AND sequence > ?
+ORDER BY sequence
+LIMIT 1;
+
 -- name: CreateChapter :one
 INSERT INTO chapters (
   book_id,
   name,
   content,
-  parent_id
+  parent_id,
+  sequence
 ) VALUES (
+  ?,
   ?,
   ?,
   ?,

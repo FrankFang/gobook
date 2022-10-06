@@ -27,6 +27,11 @@ sql:
               type: "int64"
               pointer: true
             nullable: true
+          - db_type: "float"
+            go_type:
+              type: "float64"
+              pointer: true
+            nullable: true
           - db_type: "DATE"
             go_type:
               import: "time"

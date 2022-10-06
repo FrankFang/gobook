@@ -9,6 +9,7 @@ interface State {
   fetchBook: (id?: number) => void
   updateLocalChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
   updateRemoteChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
+  appendChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
 }
 export const useBook = createStore<State>((set, get) => ({
   book: undefined,
@@ -42,5 +43,8 @@ export const useBook = createStore<State>((set, get) => ({
       const chapter = state.chapters.find(c => c.id === id)!
       Object.assign(chapter, newC)
     })
+  },
+  appendChapter: async (id, attrs) => {
+    return 0
   }
 }))

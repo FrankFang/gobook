@@ -46,7 +46,7 @@
     "editor.minimap.enabled": "undefined",
     "editor.scrollbar.verticalScrollbarSize": 0,
     "workbench.activityBar.visible": true,
-    "workbench.statusBar.visible": false,
+    "workbench.statusBar.visible": true,
     "window.zoomLevel": 1
   },
   "editor.scrollbar.verticalScrollbarSize": 0,

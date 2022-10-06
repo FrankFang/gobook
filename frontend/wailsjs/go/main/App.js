@@ -6,6 +6,10 @@ export function CreateBook(arg1) {
   return window['go']['main']['App']['CreateBook'](arg1);
 }
 
+export function CreateChapter(arg1) {
+  return window['go']['main']['App']['CreateChapter'](arg1);
+}
+
 export function DeleteBook(arg1) {
   return window['go']['main']['App']['DeleteBook'](arg1);
 }

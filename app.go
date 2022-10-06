@@ -37,20 +37,20 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-func createQuery(filename string) (*Queries, error) {
+func createQuery(filename string) (*Queries, *sql.DB, error) {
 	// 获取当前工作目录
 	p, _ := os.Getwd()
 	fullPath := path.Join(p, "gobook_data", filename)
-	conn, err := sql.Open("sqlite3", fullPath)
+	sqlDB, err := sql.Open("sqlite3", fullPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if _, err := conn.ExecContext(ctx, ddl); err != nil {
-		return nil, err
+	if _, err := sqlDB.ExecContext(ctx, ddl); err != nil {
+		return nil, nil, err
 	}
 
-	return New(conn), nil
+	return New(sqlDB), sqlDB, nil
 }
 
 // Book API
@@ -58,7 +58,7 @@ func (a *App) ListBooks(page int64) ([]Book, error) {
 	if page == 0 {
 		page = 1
 	}
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		return nil, err
 	}
@@ -68,20 +68,37 @@ func (a *App) ListBooks(page int64) ([]Book, error) {
 	}
 	return books, nil
 }
-func (a *App) CreateBook(name string) (Book, error) {
+
+func (a *App) CreateBook(name *string) (Book, error) {
 	filename := "books.db"
-	q, err := createQuery(filename)
+	q, sdb, err := createQuery(filename)
 	if err != nil {
 		panic(err)
 	}
-	b, err := q.CreateBook(ctx, name)
+	tx, err := sdb.Begin()
 	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	qtx := q.WithTx(tx)
+	b, err := qtx.CreateBook(ctx, name)
+	if err != nil {
+		panic(err)
+	}
+	if _, err = qtx.CreateChapter(ctx, CreateChapterParams{
+		BookID:  &b.ID,
+		Name:    Ptr("第一章"),
+		Content: Ptr("请开始你的创作"),
+	}); err != nil {
+		panic(err)
+	}
+	if err = tx.Commit(); err != nil {
 		panic(err)
 	}
 	return b, nil
 }
 func (a *App) DeleteBook(id int64) error {
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +109,7 @@ func (a *App) DeleteBook(id int64) error {
 	return nil
 }
 func (a *App) GetBook(id int64) (Book, error) {
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +126,7 @@ type BookWithChapters struct {
 }
 
 func (a *App) GetBookWithChapters(id int64) (bwc BookWithChapters, err error) {
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +135,7 @@ func (a *App) GetBookWithChapters(id int64) (bwc BookWithChapters, err error) {
 		panic(err)
 	}
 	bwc.Book = b
-	chapters, err := q.ListChapters(ctx, id)
+	chapters, err := q.ListChapters(ctx, &id)
 	if err != nil {
 		panic(err)
 	}
@@ -128,11 +145,11 @@ func (a *App) GetBookWithChapters(id int64) (bwc BookWithChapters, err error) {
 
 // Chapter API
 func (a *App) ListChapters(bookID int64) ([]Chapter, error) {
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
-	chapters, err := q.ListChapters(ctx, bookID)
+	chapters, err := q.ListChapters(ctx, &bookID)
 	if err != nil {
 		panic(err)
 	}
@@ -140,7 +157,7 @@ func (a *App) ListChapters(bookID int64) ([]Chapter, error) {
 }
 
 func (a *App) UpdateChapter(u UpdateChapterParams) (Chapter, error) {
-	q, err := createQuery("books.db")
+	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
@@ -149,4 +166,21 @@ func (a *App) UpdateChapter(u UpdateChapterParams) (Chapter, error) {
 		panic(err)
 	}
 	return chapter, nil
+}
+
+func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	chapter, err := q.CreateChapter(ctx, c)
+	if err != nil {
+		panic(err)
+	}
+	return chapter, nil
+}
+
+// helpers
+func Ptr[T any](v T) *T {
+	return &v
 }

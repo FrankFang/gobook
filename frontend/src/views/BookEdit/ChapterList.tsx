@@ -23,7 +23,7 @@ export const ChapterList: React.FC<ChapterListProps> = props => {
     {tree
       ? tree.map(node => [
         <ChapterListItem key={node.id ?? node.name} path={path} id={node.id}
-          hasChildren={node.children?.length > 0} value={node.name} {...rest} >
+          hasChildren={node.children?.length > 0} value={node.name!} {...rest} >
             {renderChapters(node.children, [...path, node.id])}
         </ChapterListItem>
       ])

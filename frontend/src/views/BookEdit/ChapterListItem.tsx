@@ -24,7 +24,9 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   useEffect(() => { inputRef.current?.focus() }, [focused])
   const [lastChange, setLastChange] = useState<Date>()
   useDebounce(() => {
-    onDebouncedChange?.(id, value)
+    if (id && onDebouncedChange && value !== undefined) {
+      onDebouncedChange(id, value)
+    }
   }, 300, [lastChange])
   const onInput: ChapterListItemProps['onInput'] = (e, id) => {
     _onInput(e, id)

@@ -1,2 +1,0 @@
-ALTER TABLE chapters
-ADD COLUMN deleted_at DATETIME;

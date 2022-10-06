@@ -21,3 +21,11 @@ WHERE id = ?;
 -- name: GetBook :one
 SELECT * FROM books
 WHERE id = ? AND deleted_at IS NULL;
+
+-- name: UpdateBook :one
+UPDATE books
+SET name = coalesce(@name, name),
+    summary = coalesce(@summary, summary),
+    max_chapter_sequence = coalesce(@max_chapter_sequence, max_chapter_sequence)
+WHERE id = ?
+RETURNING *;

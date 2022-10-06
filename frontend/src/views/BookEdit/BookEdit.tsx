@@ -23,7 +23,6 @@ export const BookEdit: React.FC = () => {
     window.console.log(book, chapters)
   }, [book, chapters])
 
-  const nav = useNavigate()
   const [focused, setFocused] = useState<Chapter['id']>()
   return book
     ? <div h-screen flex flex-nowrap>
@@ -39,6 +38,11 @@ export const BookEdit: React.FC = () => {
             <div grow-1 overflow-auto h-full shadow shadow-inset>
               <ChapterList chapters={chapters} focused={focused}
                 onInput={(e, id) => updateLocalChapter(id, { name: e.target.value }) }
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    // appendChapter(id)
+                  }
+                }}
                 onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
               />
               {/* {renderBookContents({

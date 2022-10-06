@@ -13,32 +13,41 @@ const createChapter = `-- name: CreateChapter :one
 INSERT INTO chapters (
   book_id,
   name,
-  content
+  content,
+  parent_id
 ) VALUES (
+  ?,
   ?,
   ?,
   ?
 )
-RETURNING id, name, book_id, content, created_at, updated_at, parent_id, deleted_at
+RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
 
 type CreateChapterParams struct {
-	BookID  int64   `json:"book_id"`
-	Name    string  `json:"name"`
-	Content *string `json:"content"`
+	BookID   *int64  `json:"book_id"`
+	Name     *string `json:"name"`
+	Content  *string `json:"content"`
+	ParentID *int64  `json:"parent_id"`
 }
 
 func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error) {
-	row := q.db.QueryRowContext(ctx, createChapter, arg.BookID, arg.Name, arg.Content)
+	row := q.db.QueryRowContext(ctx, createChapter,
+		arg.BookID,
+		arg.Name,
+		arg.Content,
+		arg.ParentID,
+	)
 	var i Chapter
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.BookID,
+		&i.ParentID,
+		&i.Sequence,
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ParentID,
 		&i.DeletedAt,
 	)
 	return i, err
@@ -56,13 +65,13 @@ func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
 }
 
 const listChapters = `-- name: ListChapters :many
-SELECT id, name, book_id, content, created_at, updated_at, parent_id, deleted_at FROM chapters
+SELECT id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at FROM chapters
 WHERE book_id = ?
 AND deleted_at IS NULL
 ORDER BY id
 `
 
-func (q *Queries) ListChapters(ctx context.Context, bookID int64) ([]Chapter, error) {
+func (q *Queries) ListChapters(ctx context.Context, bookID *int64) ([]Chapter, error) {
 	rows, err := q.db.QueryContext(ctx, listChapters, bookID)
 	if err != nil {
 		return nil, err
@@ -75,10 +84,11 @@ func (q *Queries) ListChapters(ctx context.Context, bookID int64) ([]Chapter, er
 			&i.ID,
 			&i.Name,
 			&i.BookID,
+			&i.ParentID,
+			&i.Sequence,
 			&i.Content,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.ParentID,
 			&i.DeletedAt,
 		); err != nil {
 			return nil, err
@@ -99,11 +109,11 @@ UPDATE chapters
 SET name = coalesce(@name, name),
     content = coalesce(@content, content)
 WHERE id = ?
-RETURNING id, name, book_id, content, created_at, updated_at, parent_id, deleted_at
+RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
 
 type UpdateChapterParams struct {
-	Name    string  `json:"name"`
+	Name    *string `json:"name"`
 	Content *string `json:"content"`
 	ID      int64   `json:"id"`
 }
@@ -115,10 +125,11 @@ func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (C
 		&i.ID,
 		&i.Name,
 		&i.BookID,
+		&i.ParentID,
+		&i.Sequence,
 		&i.Content,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.ParentID,
 		&i.DeletedAt,
 	)
 	return i, err

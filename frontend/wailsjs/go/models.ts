@@ -1,30 +1,15 @@
 export namespace main {
 	
-	export class UpdateChapterParams {
-	    name: string;
-	    content?: string;
-	    id: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateChapterParams(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.content = source["content"];
-	        this.id = source["id"];
-	    }
-	}
 	export class Book {
 	    id: number;
-	    name: string;
+	    name?: string;
 	    author?: string;
+	    summary?: string;
+	    max_chapter_sequence?: number;
 	    // Go type: time.Time
 	    created_at: any;
 	    // Go type: time.Time
 	    updated_at?: any;
-	    summary?: string;
 	    // Go type: time.Time
 	    deleted_at?: any;
 	
@@ -37,9 +22,10 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.author = source["author"];
+	        this.summary = source["summary"];
+	        this.max_chapter_sequence = source["max_chapter_sequence"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
-	        this.summary = source["summary"];
 	        this.deleted_at = this.convertValues(source["deleted_at"], null);
 	    }
 	
@@ -61,16 +47,35 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class CreateChapterParams {
+	    book_id?: number;
+	    name?: string;
+	    content?: string;
+	    parent_id?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateChapterParams(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.book_id = source["book_id"];
+	        this.name = source["name"];
+	        this.content = source["content"];
+	        this.parent_id = source["parent_id"];
+	    }
+	}
 	export class Chapter {
 	    id: number;
-	    name: string;
-	    book_id: number;
+	    name?: string;
+	    book_id?: number;
+	    parent_id?: number;
+	    sequence?: number;
 	    content?: string;
 	    // Go type: time.Time
 	    created_at: any;
 	    // Go type: time.Time
 	    updated_at?: any;
-	    parent_id: number;
 	    // Go type: time.Time
 	    deleted_at?: any;
 	
@@ -83,10 +88,11 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.book_id = source["book_id"];
+	        this.parent_id = source["parent_id"];
+	        this.sequence = source["sequence"];
 	        this.content = source["content"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
-	        this.parent_id = source["parent_id"];
 	        this.deleted_at = this.convertValues(source["deleted_at"], null);
 	    }
 	
@@ -110,13 +116,14 @@ export namespace main {
 	}
 	export class BookWithChapters {
 	    id: number;
-	    name: string;
+	    name?: string;
 	    author?: string;
+	    summary?: string;
+	    max_chapter_sequence?: number;
 	    // Go type: time.Time
 	    created_at: any;
 	    // Go type: time.Time
 	    updated_at?: any;
-	    summary?: string;
 	    // Go type: time.Time
 	    deleted_at?: any;
 	    chapters: Chapter[];
@@ -130,9 +137,10 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.author = source["author"];
+	        this.summary = source["summary"];
+	        this.max_chapter_sequence = source["max_chapter_sequence"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
-	        this.summary = source["summary"];
 	        this.deleted_at = this.convertValues(source["deleted_at"], null);
 	        this.chapters = this.convertValues(source["chapters"], Chapter);
 	    }
@@ -154,6 +162,22 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class UpdateChapterParams {
+	    name?: string;
+	    content?: string;
+	    id: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateChapterParams(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.content = source["content"];
+	        this.id = source["id"];
+	    }
 	}
 
 }

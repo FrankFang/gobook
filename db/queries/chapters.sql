@@ -8,8 +8,10 @@ ORDER BY id;
 INSERT INTO chapters (
   book_id,
   name,
-  content
+  content,
+  parent_id
 ) VALUES (
+  ?,
   ?,
   ?,
   ?
@@ -24,6 +26,7 @@ WHERE id = ?;
 -- name: UpdateChapter :one
 UPDATE chapters
 SET name = coalesce(@name, name),
+    sequence = coalesce(@sequence, sequence),
     content = coalesce(@content, content)
 WHERE id = ?
 RETURNING *;

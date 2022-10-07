@@ -20,10 +20,14 @@
     "source.organizeImports": false
   },
   "cSpell.words": [
+    "Attributify",
     "gobook",
+    "immer",
     "Klass",
     "unocss",
-    "wailsjs"
+    "wailsjs",
+    "windicss",
+    "zustand"
   ],
   "sqltools.connections": [
     {
@@ -43,16 +47,14 @@
     "eslint"
   ],
   "presentation-mode.configBackup": {
-    "editor.minimap.enabled": "undefined",
-    "editor.scrollbar.verticalScrollbarSize": 0,
+    "editor.minimap.enabled": false,
     "workbench.activityBar.visible": true,
-    "workbench.statusBar.visible": true,
+    "workbench.statusBar.visible": false,
     "window.zoomLevel": 1
   },
-  "editor.scrollbar.verticalScrollbarSize": 0,
   "workbench.activityBar.visible": true,
-  "workbench.statusBar.visible": false,
-  "window.zoomLevel": 2,
+  "workbench.statusBar.visible": true,
+  "window.zoomLevel": 1,
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,

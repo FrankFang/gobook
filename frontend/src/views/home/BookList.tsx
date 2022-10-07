@@ -70,7 +70,7 @@ const Card: React.FC<CardProps> = ({ book }) => {
         {book.summary?.substring?.(0, 100)}
       </p>
       <p color-gray flex justify-between items-center>{dayjs(book.created_at).format('YYYY-MM-DD HH:mm')}
-      { c.editMode && <Button size="small" onClick={e => onDeleteBook(e, book.id)}>删除</Button> }
+      { c.editMode && <Button size="small" color='white' onClick={e => onDeleteBook(e, book.id)}>删除</Button> }
       </p>
     </div>
   )

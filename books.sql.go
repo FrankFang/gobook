@@ -35,7 +35,7 @@ func (q *Queries) CreateBook(ctx context.Context, name *string) (Book, error) {
 
 const deleteBook = `-- name: DeleteBook :exec
 UPDATE books
-SET deleted_at = date('now')
+SET deleted_at = datetime('now')
 WHERE id = ?
 `
 

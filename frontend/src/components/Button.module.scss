@@ -11,4 +11,12 @@
     height: 64px;
     padding: 0 16px;
   }
+  &.blue{
+    background: rgba(96,165,250,var(--un-bg-opacity));
+    color: white;
+  }
+  &.white{
+    background: white;
+    color: #333;
+  }
 }

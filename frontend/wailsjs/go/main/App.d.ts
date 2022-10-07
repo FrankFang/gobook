@@ -8,9 +8,13 @@ export function CreateChapter(arg1:main.CreateChapterParams):Promise<main.Chapte
 
 export function DeleteBook(arg1:number):Promise<Error>;
 
+export function DeleteChapter(arg1:number):Promise<Error>;
+
 export function GetBook(arg1:number):Promise<main.Book>;
 
 export function GetBookWithChapters(arg1:number):Promise<main.BookWithChapters>;
+
+export function GetChapter(arg1:number):Promise<main.Chapter>;
 
 export function Greet(arg1:string):Promise<string>;
 
@@ -19,5 +23,7 @@ export function InsertChapterAfter(arg1:number,arg2:main.CreateChapterParams):Pr
 export function ListBooks(arg1:number):Promise<Array<main.Book>>;
 
 export function ListChapters(arg1:number):Promise<Array<main.Chapter>>;
+
+export function MoveChapter(arg1:number,arg2:number,arg3:number):Promise<main.Chapter>;
 
 export function UpdateChapter(arg1:main.UpdateChapterParams):Promise<main.Chapter>;

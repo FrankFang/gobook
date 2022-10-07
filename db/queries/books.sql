@@ -15,7 +15,7 @@ LIMIT 10 OFFSET ?;
 
 -- name: DeleteBook :exec
 UPDATE books
-SET deleted_at = date('now')
+SET deleted_at = datetime('now')
 WHERE id = ?;
 
 -- name: GetBook :one

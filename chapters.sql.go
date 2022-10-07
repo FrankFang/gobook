@@ -63,19 +63,46 @@ func (q *Queries) CalcNextSequence(ctx context.Context, arg CalcNextSequencePara
 	return items, nil
 }
 
+const calcPrevSequence = `-- name: CalcPrevSequence :many
+SELECT sequence FROM chapters
+WHERE book_id = ? AND parent_id = ?  AND deleted_at IS NULL
+AND sequence < ?
+ORDER BY sequence DESC
+LIMIT 1
+`
+
+type CalcPrevSequenceParams struct {
+	BookID   *int64   `json:"book_id"`
+	ParentID *int64   `json:"parent_id"`
+	Sequence *float64 `json:"sequence"`
+}
+
+func (q *Queries) CalcPrevSequence(ctx context.Context, arg CalcPrevSequenceParams) ([]*float64, error) {
+	rows, err := q.db.QueryContext(ctx, calcPrevSequence, arg.BookID, arg.ParentID, arg.Sequence)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*float64
+	for rows.Next() {
+		var sequence *float64
+		if err := rows.Scan(&sequence); err != nil {
+			return nil, err
+		}
+		items = append(items, sequence)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createChapter = `-- name: CreateChapter :one
-INSERT INTO chapters (
-  book_id,
-  name,
-  content,
-  parent_id,
-  sequence
-) VALUES (
-  ?,
-  ?,
-  ?,
-  ?,
-  ?
+INSERT INTO chapters ( book_id, name, content, parent_id, sequence
+) VALUES ( ?, ?, ?, ?, ?
 )
 RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
@@ -113,12 +140,23 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 
 const deleteChapter = `-- name: DeleteChapter :exec
 UPDATE chapters
-SET deleted_at = date('now')
+SET deleted_at = datetime('now')
 WHERE id = ?
 `
 
 func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteChapter, id)
+	return err
+}
+
+const deleteChapters = `-- name: DeleteChapters :exec
+UPDATE chapters
+SET deleted_at = datetime('now')
+WHERE book_id = ?
+`
+
+func (q *Queries) DeleteChapters(ctx context.Context, bookID *int64) error {
+	_, err := q.db.ExecContext(ctx, deleteChapters, bookID)
 	return err
 }
 
@@ -187,7 +225,8 @@ const updateChapter = `-- name: UpdateChapter :one
 UPDATE chapters
 SET name = coalesce(@name, name),
     sequence = coalesce(@sequence, sequence),
-    content = coalesce(@content, content)
+    content = coalesce(@content, content),
+    parent_id = coalesce(@parent_id, parent_id)
 WHERE id = ?
 RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
@@ -196,6 +235,7 @@ type UpdateChapterParams struct {
 	Name     *string  `json:"name"`
 	Sequence *float64 `json:"sequence"`
 	Content  *string  `json:"content"`
+	ParentID *int64   `json:"parent_id"`
 	ID       int64    `json:"id"`
 }
 
@@ -204,6 +244,7 @@ func (q *Queries) UpdateChapter(ctx context.Context, arg UpdateChapterParams) (C
 		arg.Name,
 		arg.Sequence,
 		arg.Content,
+		arg.ParentID,
 		arg.ID,
 	)
 	var i Chapter

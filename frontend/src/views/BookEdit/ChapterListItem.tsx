@@ -21,7 +21,11 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const style = { paddingLeft: `${16 + level * 4}px` }
   const [open, setOpen] = useState(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  useEffect(() => { inputRef.current?.focus() }, [focused])
+  useEffect(() => {
+    if (id === focused) {
+      inputRef.current?.focus()
+    }
+  }, [focused])
   const [lastChange, setLastChange] = useState<Date>()
   useDebounce(() => {
     if (id && onDebouncedChange && value !== undefined) {
@@ -45,7 +49,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
             }
         <input
           ref={inputRef} lh-24px py-8px text-18px
-          value={value} shrink-1
+          value={ value} shrink-1
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => onKeyDown?.(e, id)}
           onInput={(e: ChangeEvent<HTMLInputElement>) => onInput(e, id)}
           onFocus={(e: FocusEvent<HTMLInputElement>) => onSelect?.(e, id)}

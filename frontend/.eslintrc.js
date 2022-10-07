@@ -8,6 +8,8 @@ module.exports = {
     "curly": "off",
     "arrow-parens": ["error", "as-needed"],
     "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/brace-style": "off",
+    "@typescript-eslint/no-unnecessary-type-constraint": "off",
     "@typescript-eslint/comma-dangle": ["error", {
       "arrays": "only-multiline",
       "objects": "only-multiline",

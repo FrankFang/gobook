@@ -1,6 +1,6 @@
 import * as React from 'react'
-import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import logo from '../../assets/icons/logo.svg'
 import { useBook } from '../../stores/useBook'
@@ -14,16 +14,41 @@ type Chapter = main.Chapter
 
 export const BookEdit: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>()
-  const { book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter } = useBook()
+  const {
+    book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
+    findOlderBrother, findYoungerBrother, tree, moveChapter
+  } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
     fetchBook(parseInt(bookId))
   }, [bookId])
-  useEffect(() => {
-    window.console.log(book, chapters)
-  }, [book, chapters])
 
   const [focused, setFocused] = useState<Chapter['id']>()
+  const map: Record<string, (e: React.SyntheticEvent<HTMLInputElement>, id: Chapter['id']) => void>
+    = useMemo(() => {
+      return {
+        Enter: (e, id) => {
+          appendChapter(id, { name: '新章节', content: '请添加内容' })
+        },
+        Tab: (e, id) => {
+          e.preventDefault()
+          const brother = findOlderBrother(id, tree)
+          if (brother) {
+            moveChapter('append', id, brother.id)
+          }
+        },
+        ArrowUp: (e, id) => {
+          e.preventDefault()
+          const brother = findOlderBrother(id, tree)
+          if (brother) { setFocused(brother.id) }
+        },
+        ArrowDown: (e, id) => {
+          e.preventDefault()
+          const brother = findYoungerBrother(id, tree)
+          if (brother) { setFocused(brother.id) }
+        }
+      }
+    }, [tree])
   return book
     ? <div h-screen flex flex-nowrap>
       <div w-20em h-screen b-1 shrink-0 flex flex-col>
@@ -38,56 +63,13 @@ export const BookEdit: React.FC = () => {
             <div grow-1 overflow-auto h-full shadow shadow-inset>
               <ChapterList chapters={chapters} focused={focused}
                 onInput={(e, id) => {
-                  debugger
                   updateLocalChapter(id, { name: e.target.value })
                 }}
                 onKeyDown={(e, id) => {
-                  debugger
-                  if (e.key === 'Enter') {
-                    appendChapter(id, { name: '新章节', content: '请添加内容' })
-                  }
+                  map[e.key]?.(e, id)
                 }}
                 onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
               />
-              {/* {renderBookContents({
-                tree: chapters,
-                focused,
-                onInput: (e, id) => {
-                  // updateChapter(id, e.target.value)
-                },
-                onKeyDown: (e, id) => {
-                  let newId: Chapter['id']
-                  switch (e.key) {
-                    case 'Enter':
-                      // newId = appendChapter(id, { name: '' })
-                      // setFocused(newId)
-                      break
-                    case 'Backspace':
-                      if ((e.target as HTMLInputElement).value === '') {
-                        // removeChapter(id)
-                      }
-                      break
-                    case 'ArrowUp':
-                      break
-                    case 'ArrowDown':
-                      break
-                    case 'Tab':
-                      e.preventDefault()
-                      if (e.shiftKey) {
-                        // unindentChapter(id)
-                      }
-                      else {
-                        // indentChapter(id)
-                      }
-                      break
-                    default:
-                      return true
-                  }
-                },
-                onSelect: (e, id) => {
-                  nav(`/books/${book.id}/edit/articles/${id}/edit`)
-                },
-              })} */}
             </div>
           </li>
           <li overflow-hidden grow-0 flex flex-col shrink-0>

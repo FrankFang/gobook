@@ -1,19 +1,6 @@
-import type {
-  ChangeEvent,
-  FocusEvent,
-  KeyboardEvent,
-  ReactNode,
-} from 'react'
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
-import { Collapse } from 'react-collapse'
+import create from 'zustand'
+import { immer } from 'zustand/middleware/immer'
 import type { main } from '../../wailsjs/go/models'
-
-import { createStore } from '../shared/zustand-helper'
-
 
 type Chapter = main.Chapter
 type Chapters = Chapter[]
@@ -35,26 +22,30 @@ interface Actions {
 }
 type Store = State & Actions
 
-export const useChapters = createStore<Store>(set => ({
-  book: undefined,
-  chapters: [],
-  updateChapter: (id: Chapter['id'], name: Chapter['name']) => {
-    throw new Error('not implemented')
-  },
-  fetchChapters: async () => {
-    throw new Error('not implemented')
-  },
-  appendChapter: () => {
-    throw new Error('not implemented')
-  },
-  removeChapter: () => {
-    throw new Error('not implemented')
-  },
-  indentChapter: () => {
-    throw new Error('not implemented')
-  },
-  unindentChapter: () => {
-    throw new Error('not implemented')
-  },
-}))
+export const useChapters = create<Store>()(
+  immer(
+    set => ({
+      book: undefined,
+      chapters: [],
+      updateChapter: (id: Chapter['id'], name: Chapter['name']) => {
+        throw new Error('not implemented')
+      },
+      fetchChapters: async () => {
+        throw new Error('not implemented')
+      },
+      appendChapter: () => {
+        throw new Error('not implemented')
+      },
+      removeChapter: () => {
+        throw new Error('not implemented')
+      },
+      indentChapter: () => {
+        throw new Error('not implemented')
+      },
+      unindentChapter: () => {
+        throw new Error('not implemented')
+      },
+    })
+  )
+)
 

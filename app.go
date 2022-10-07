@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -92,15 +93,25 @@ func (a *App) CreateBook(name *string) (Book, error) {
 	return b, nil
 }
 func (a *App) DeleteBook(id int64) error {
-	q, _, err := createQuery("books.db")
+	q, sdb, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
-	err = q.DeleteBook(ctx, id)
+	tx, err := sdb.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	qtx := q.WithTx(tx)
+	err = qtx.DeleteBook(ctx, id)
 	if err != nil {
 		panic(err)
 	}
-	return nil
+	err = qtx.DeleteChapters(ctx, &id)
+	if err != nil {
+		panic(err)
+	}
+	return tx.Commit()
 }
 func (a *App) GetBook(id int64) (Book, error) {
 	q, _, err := createQuery("books.db")
@@ -161,26 +172,31 @@ func (a *App) UpdateChapter(u UpdateChapterParams) (Chapter, error) {
 	}
 	return chapter, nil
 }
-
+func getFloat(r any, fallback float64) float64 {
+	if r == nil {
+		return fallback
+	}
+	if rFloat, ok := r.(float64); ok {
+		return rFloat
+	}
+	return fallback
+}
 func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 	q, _, err := createQuery("books.db")
 	if err != nil {
 		panic(err)
 	}
-	r, err := q.CalcMaxSequence(ctx, CalcMaxSequenceParams{
-		BookID:   c.BookID,
-		ParentID: c.ParentID,
-	})
-	if err != nil {
-		panic(err)
-	}
-	max := 0.0
-	if r != nil {
-		if rFloat, ok := r.(float64); ok {
-			max = rFloat
+	if c.Sequence == nil {
+		r, err := q.CalcMaxSequence(ctx, CalcMaxSequenceParams{
+			BookID:   c.BookID,
+			ParentID: c.ParentID,
+		})
+		if err != nil {
+			panic(err)
 		}
+		max := getFloat(r, 0)
+		c.Sequence = Ptr(max + 1)
 	}
-	c.Sequence = Ptr(max + 1)
 	chapter, err := q.CreateChapter(ctx, c)
 	if err != nil {
 		panic(err)
@@ -206,7 +222,7 @@ func (a *App) InsertChapterAfter(chapterID int64, c CreateChapterParams) (Chapte
 	if err != nil {
 		panic(err)
 	}
-	seq := 0.0
+	var seq float64
 	if len(seqs) > 0 {
 		seq = (*c1.Sequence + *seqs[0]) / 2
 	} else {
@@ -223,6 +239,129 @@ func (a *App) InsertChapterAfter(chapterID int64, c CreateChapterParams) (Chapte
 		panic(err)
 	}
 	return newChapter, nil
+}
+
+const (
+	InsertAfter int = iota
+	InsertBefore
+	Append
+)
+
+func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, error) {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	chapter, err := q.GetChapter(ctx, chapterId)
+	if err != nil {
+		panic(err)
+	}
+	target, err := q.GetChapter(ctx, targetId)
+	if err != nil {
+		panic(err)
+	}
+	if *chapter.BookID != *target.BookID {
+		return Chapter{}, errors.New("chapter and target must be in the same book")
+	}
+	switch t {
+	case Append:
+		chapter.ParentID = &target.ID
+		r, err := q.CalcMaxSequence(ctx, CalcMaxSequenceParams{
+			BookID:   chapter.BookID,
+			ParentID: chapter.ParentID,
+		})
+		if err != nil {
+			panic(err)
+		}
+		max := getFloat(r, 0)
+		chapter.Sequence = Ptr(max + 1)
+		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{
+			ID:       chapter.ID,
+			Sequence: chapter.Sequence,
+			ParentID: chapter.ParentID,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return newChapter, nil
+	case InsertAfter:
+		chapter.ParentID = target.ParentID
+		seqs, err := q.CalcNextSequence(ctx, CalcNextSequenceParams{
+			BookID:   chapter.BookID,
+			ParentID: chapter.ParentID,
+			Sequence: target.Sequence,
+		})
+		if err != nil {
+			panic(err)
+		}
+		seq := 0.0
+		if len(seqs) > 0 {
+			seq = (*target.Sequence + *seqs[0]) / 2
+		} else {
+			seq = *target.Sequence + 1.0
+		}
+		chapter.Sequence = Ptr(seq)
+		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{
+			ID:       chapter.ID,
+			Sequence: chapter.Sequence,
+			ParentID: chapter.ParentID,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return newChapter, nil
+	case InsertBefore:
+		chapter.ParentID = target.ParentID
+		seqs, err := q.CalcPrevSequence(ctx, CalcPrevSequenceParams{
+			BookID:   chapter.BookID,
+			ParentID: chapter.ParentID,
+			Sequence: target.Sequence,
+		})
+		if err != nil {
+			panic(err)
+		}
+		seq := 0.0
+		if len(seqs) > 0 {
+			seq = (*target.Sequence + *seqs[0]) / 2
+		} else {
+			seq = *target.Sequence - 1.0
+		}
+		chapter.Sequence = Ptr(seq)
+		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{
+			ID:       chapter.ID,
+			Sequence: chapter.Sequence,
+			ParentID: chapter.ParentID,
+		})
+		if err != nil {
+			panic(err)
+		}
+		return newChapter, nil
+	}
+	return Chapter{}, errors.New("unknown move type")
+}
+
+func (a *App) DeleteChapter(id int64) error {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	err = q.DeleteChapter(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func (a *App) GetChapter(id int64) (Chapter, error) {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		panic(err)
+	}
+	chapter, err := q.GetChapter(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return chapter, nil
 }
 
 // helpers

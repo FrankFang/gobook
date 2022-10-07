@@ -16,7 +16,7 @@ export const BookEdit: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>()
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
-    findOlderBrother, findYoungerBrother, tree, moveChapter
+    findOlderBrother, findYoungerBrother, findFather, tree, moveChapter
   } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
@@ -32,9 +32,17 @@ export const BookEdit: React.FC = () => {
         },
         Tab: (e, id) => {
           e.preventDefault()
-          const brother = findOlderBrother(id, tree)
-          if (brother) {
-            moveChapter('append', id, brother.id)
+          const shift = (e.nativeEvent as KeyboardEvent).shiftKey
+          if (shift) {
+            const father = findFather(id, tree)
+            if (father) {
+              moveChapter('insertAfter', id, father.id)
+            }
+          } else {
+            const brother = findOlderBrother(id, tree)
+            if (brother) {
+              moveChapter('append', id, brother.id)
+            }
           }
         },
         ArrowUp: (e, id) => {

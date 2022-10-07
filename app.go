@@ -286,6 +286,9 @@ func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, erro
 		return newChapter, nil
 	case InsertAfter:
 		chapter.ParentID = target.ParentID
+		if chapter.ParentID == nil {
+			chapter.ParentID = new(int64)
+		}
 		seqs, err := q.CalcNextSequence(ctx, CalcNextSequenceParams{
 			BookID:   chapter.BookID,
 			ParentID: chapter.ParentID,
@@ -312,6 +315,9 @@ func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, erro
 		return newChapter, nil
 	case InsertBefore:
 		chapter.ParentID = target.ParentID
+		if chapter.ParentID == nil {
+			chapter.ParentID = new(int64)
+		}
 		seqs, err := q.CalcPrevSequence(ctx, CalcPrevSequenceParams{
 			BookID:   chapter.BookID,
 			ParentID: chapter.ParentID,

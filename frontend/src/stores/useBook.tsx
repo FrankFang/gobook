@@ -25,6 +25,7 @@ interface State {
   findSiblings: (id: number, tree: Tree) => Node[]
   findOlderBrother: (id: number, tree: Tree) => Node | undefined
   findYoungerBrother: (id: number, tree: Tree) => Node | undefined
+  findFather: (id: number, tree: Tree) => Node | undefined
   generateChapterTree: (chapters: Chapter[]) => Tree
   moveChapter: (moveType: keyof typeof moveTypeMap, chapterId: number, targetId: number) => void
 }
@@ -88,6 +89,12 @@ export const useBook = create<State>()(
           const children = get().findSiblings(chapterId, tree)
           const currentIndex = children.findIndex(c => c.id === chapterId)
           return children[currentIndex + 1]
+        },
+        findFather: (id, tree) => {
+          const currentNode = findNodeById(tree, id)
+          if (!currentNode) { throw new Error('chapter is not found') }
+          if (!currentNode.parent_id) { return undefined }
+          return findNodeById(tree, currentNode.parent_id)
         },
         generateChapterTree: chapters => {
           const tree: Tree = []

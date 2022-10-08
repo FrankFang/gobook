@@ -31,7 +31,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
     if (id && onDebouncedChange && value !== undefined) {
       onDebouncedChange(id, value)
     }
-  }, 300, [lastChange])
+  }, 200, [lastChange])
   const onInput: ChapterListItemProps['onInput'] = (e, id) => {
     _onInput(e, id)
     setLastChange(new Date())
@@ -40,14 +40,14 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   return (
     <div style={style} className="menuItem">
       <label py-4px flex items-center className="menuItem-name">
-        {hasChildren
+        <span>{hasChildren
           ? visible
             ? <i i-bi-chevron-down shrink-0 mr-4px
                 onClick={() => toggleVisible(false)} />
             : <i i-bi-chevron-right shrink-0 mr-4px
                 onClick={() => toggleVisible(true)} />
           : <i i-bi-record shrink-0 mr-4px />
-            }
+        }</span>
         <input
           ref={inputRef} lh-24px py-8px text-18px
           value={ value} shrink-1

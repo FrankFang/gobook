@@ -24,7 +24,7 @@ export const BookEdit: React.FC = () => {
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
     findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, findChildrenInTree,
-    tree, flatTree, moveChapter
+    tree, flatTree, moveChapter, deleteChapter, findSelfInTree
   } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
@@ -35,8 +35,18 @@ export const BookEdit: React.FC = () => {
   const map: Record<string, (e: React.SyntheticEvent<HTMLInputElement>, id: Chapter['id']) => void>
     = useMemo(() => {
       return {
-        Enter: (e, id) => {
-          appendChapter(id, { name: '新章节', content: '请添加内容' })
+        Enter: async (e, id) => {
+          const newChapter = await appendChapter(id, { name: '', content: '' })
+          setFocused(newChapter.id)
+        },
+        Backspace: async (e, id) => {
+          if ((e.target as HTMLInputElement).value === ''
+            && chapters.length > 1) {
+            const index = flatTree.findIndex(c => c.id === id)
+            const brother = flatTree[index - 1]
+            await deleteChapter(id)
+            if (brother) { setFocused(brother.id) }
+          }
         },
         Tab: (e, id) => {
           e.preventDefault()
@@ -55,15 +65,31 @@ export const BookEdit: React.FC = () => {
         },
         ArrowUp: (e, id) => {
           e.preventDefault()
-          const index = flatTree.findIndex((n, i) => n.id === id)
-          const prev = flatTree[index - 1]
-          if (prev) { setFocused(prev.id) }
+          const alt = (e.nativeEvent as KeyboardEvent).altKey
+          if (alt) {
+            const brother = findOlderBrotherInTree(id, tree)
+            if (brother) {
+              moveChapter('insertBefore', id, brother.id)
+            }
+          } else {
+            const index = flatTree.findIndex((n, i) => n.id === id)
+            const prev = flatTree[index - 1]
+            if (prev) { setFocused(prev.id) }
+          }
         },
         ArrowDown: (e, id) => {
           e.preventDefault()
-          const index = flatTree.findIndex((n, i) => n.id === id)
-          const next = flatTree[index + 1]
-          if (next) { setFocused(next.id) }
+          const alt = (e.nativeEvent as KeyboardEvent).altKey
+          if (alt) {
+            const brother = findYoungerBrotherInTree(id, tree)
+            if (brother) {
+              moveChapter('insertAfter', id, brother.id)
+            }
+          } else {
+            const index = flatTree.findIndex((n, i) => n.id === id)
+            const next = flatTree[index + 1]
+            if (next) { setFocused(next.id) }
+          }
         }
       }
     }, [tree, flatTree])

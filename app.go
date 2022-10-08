@@ -223,6 +223,7 @@ func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 			chapter.Sequence = Ptr(float64(i + sequenceStep))
 			_, err := q.UpdateChapter(ctx, UpdateChapterParams{
 				Sequence: chapter.Sequence,
+				ID:       chapter.ID,
 			})
 			if err != nil {
 				panic(err)
@@ -362,7 +363,7 @@ func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, erro
 		if len(seqs) > 0 {
 			seq = (*target.Sequence + *seqs[0]) / 2
 		} else {
-			seq = *target.Sequence - 1.0
+			seq = *target.Sequence - sequenceStep
 		}
 		chapter.Sequence = Ptr(seq)
 		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{

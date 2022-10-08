@@ -4,7 +4,7 @@ import {
 } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { main } from '../../wailsjs/go/models'
-import { GetBookWithChapters, InsertChapterAfter, MoveChapter, UpdateChapter } from '../../wailsjs/go/main/App'
+import { DeleteChapter, GetBookWithChapters, InsertChapterAfter, MoveChapter, UpdateChapter } from '../../wailsjs/go/main/App'
 
 type Node = Omit<Chapter, 'convertValues'> & { children: Node[] }
 type Tree = Node[]
@@ -22,7 +22,8 @@ interface State {
   fetchBook: (id?: number) => void
   updateLocalChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
   updateRemoteChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
-  appendChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
+  appendChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => Promise<Chapter>
+  deleteChapter: (id: number) => Promise<void>
   findSiblingsInTree: (id: number, tree: Tree) => Node[]
   findOlderBrotherInTree: (id: number, tree: Tree) => Node | undefined
   findYoungerBrotherInTree: (id: number, tree: Tree) => Node | undefined
@@ -68,6 +69,14 @@ export const useBook = create<State>()(
           const chapter = await InsertChapterAfter(id, attrs)
           set(state => {
             state.chapters.push(chapter)
+          })
+          return chapter
+        },
+        deleteChapter: async id => {
+          await DeleteChapter(id)
+          set(state => {
+            const index = state.chapters.findIndex(c => c.id === id)
+            state.chapters.splice(index, 1)
           })
         },
         findSiblingsInTree: (chapterId, tree) => {

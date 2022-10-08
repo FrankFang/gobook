@@ -11,7 +11,7 @@ export type ChapterListProps = {
   path?: Path
   focused?: Chapter['id']
   onInput: (e: ChangeEvent<HTMLInputElement>, id: Chapter['id']) => void
-  onSelect?: (e: FocusEvent<HTMLInputElement>, id: Chapter['id']) => void
+  onFocus?: (e: FocusEvent<HTMLInputElement>, id: Chapter['id']) => void
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, id: Chapter['id']) => void
   onDebouncedChange?: (id: Chapter['id'], name: Chapter['name']) => void
 }

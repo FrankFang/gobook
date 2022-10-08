@@ -93,6 +93,7 @@ export const BookEdit: React.FC = () => {
         }
       }
     }, [tree, flatTree])
+  const nav = useNavigate()
   return book
     ? <div h-screen flex flex-nowrap>
       <div w-20em h-screen b-1 shrink-0 flex flex-col>
@@ -111,6 +112,9 @@ export const BookEdit: React.FC = () => {
                 }}
                 onKeyDown={(e, id) => {
                   map[e.key]?.(e, id)
+                }}
+                onFocus={(e, id) => {
+                  nav(`/books/${book.id}/edit/chapters/${id}/edit`)
                 }}
                 onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
               />

@@ -14,7 +14,7 @@ export type ChapterListItemProps = {
 
 export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const {
-    id, path, children, hasChildren, focused, onInput: _onInput, onSelect, onKeyDown, value,
+    id, path, children, hasChildren, focused, onInput: _onInput, onFocus, onKeyDown, value,
     onDebouncedChange
   } = props
   const level = path.length
@@ -53,7 +53,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
           value={ value} shrink-1
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => onKeyDown?.(e, id)}
           onInput={(e: ChangeEvent<HTMLInputElement>) => onInput(e, id)}
-          onFocus={(e: FocusEvent<HTMLInputElement>) => onSelect?.(e, id)}
+          onFocus={(e: FocusEvent<HTMLInputElement>) => onFocus?.(e, id)}
         />
       </label>
       <div style={childrenStyle}>{children}</div>

@@ -53,3 +53,7 @@ export function MoveChapter(arg1, arg2, arg3) {
 export function UpdateChapter(arg1) {
   return window['go']['main']['App']['UpdateChapter'](arg1);
 }
+
+export function UploadImage(arg1) {
+  return window['go']['main']['App']['UploadImage'](arg1);
+}

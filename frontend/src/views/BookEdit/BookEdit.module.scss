@@ -7,3 +7,12 @@
     }
   }
 }
+
+.focused {
+  > label {
+    i,
+    input {
+      color: var(--color-blue);
+    }
+  }
+}

@@ -21,7 +21,7 @@ export const ChapterEdit: React.FC = () => {
   return (
     chapter
       ? <div flex flex-col>
-       <textarea h-screen grow-1 b-1 bg-gray p-2 value={chapter.content} onChange={onChange} />
+       <textarea text-lg h-screen grow-1 bg-gray-250 p-2 value={chapter.content} onChange={onChange} />
      </div>
       : <div>404</div>
   )

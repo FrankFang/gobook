@@ -3,6 +3,7 @@ import { ChapterEdit } from '../views/ChapterEdit'
 import { BookEdit } from '../views/BookEdit/BookEdit'
 import { Empty } from '../views/Empty'
 import { Home } from '../views/Home/Home'
+import { NoSelectedChapter } from '../components/NoSelectedChapter'
 export const createRoutes = () => {
   return (
     <Routes>
@@ -13,6 +14,7 @@ export const createRoutes = () => {
           <Route path=":bookId" element={<Outlet />}>
             <Route index element={<Empty />} />
             <Route path="edit" element={<BookEdit />}>
+              <Route index element={<NoSelectedChapter />} />
               <Route path="chapters" element={<Outlet />}>
                 <Route index element={<Empty />} />
                 <Route path=":chapterId" element={<Outlet />}>

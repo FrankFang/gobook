@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useDebounce } from 'react-use'
 import { useToggle } from '../../hooks/useToggle'
 import type { ChapterListProps } from './ChapterList'
+import s from './BookEdit.module.scss'
 
 export type ChapterListItemProps = {
   value: string
@@ -14,17 +15,17 @@ export type ChapterListItemProps = {
 
 export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const {
-    id, path, children, hasChildren, focused, onInput: _onInput, onFocus, onKeyDown, value,
-    onDebouncedChange
+    id, path, children, hasChildren, focused, onInput: _onInput, onFocus, onKeyDown,
+    value, onDebouncedChange
   } = props
   const level = path.length
   const style = { paddingLeft: `${16 + level * 4}px` }
   const [visible, toggleVisible] = useToggle(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
-    if (id === focused) {
-      inputRef.current?.focus()
-    }
+    // if (id === focused) {
+    //   inputRef.current?.focus()
+    // }
   }, [focused])
   const [lastChange, setLastChange] = useState<Date>()
   useDebounce(() => {
@@ -37,8 +38,10 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
     setLastChange(new Date())
   }
   const childrenStyle = { display: visible ? 'block' : 'none' }
+  const className = ['menuItem', focused === id ? s.focused : '']
+    .filter(a => a).join(' ')
   return (
-    <div style={style} className="menuItem">
+    <div style={style} className={className}>
       <label py-4px flex items-center className="menuItem-name">
         <span>{hasChildren
           ? visible

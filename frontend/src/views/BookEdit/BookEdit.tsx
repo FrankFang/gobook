@@ -96,11 +96,11 @@ export const BookEdit: React.FC = () => {
   const nav = useNavigate()
   return book
     ? <div h-screen flex flex-nowrap>
-      <div w-20em h-screen b-1 shrink-0 flex flex-col>
+      <div w-20em h-screen shrink-0 flex flex-col>
         <Panels>
           <li overflow-hidden grow-0 flex flex-col shrink-0>
             <div p-16px>
-              <Link to="/"><Button size="small">&lt; 返回首页</Button></Link>
+              <Link to="/"><Button color="white" size="small">返回首页</Button></Link>
             </div>
           </li>
           <li overflow-hidden grow-1 flex flex-col shrink-1>
@@ -115,6 +115,7 @@ export const BookEdit: React.FC = () => {
                 }}
                 onFocus={(e, id) => {
                   nav(`/books/${book.id}/edit/chapters/${id}/edit`)
+                  setFocused(id)
                 }}
                 onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
               />
@@ -129,7 +130,7 @@ export const BookEdit: React.FC = () => {
         </div>
       </div>
       <div b-1 grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
-        <Outlet />
+        <Outlet/>
       </div>
       <div w-20em b-1 shrink-0></div>
     </div>

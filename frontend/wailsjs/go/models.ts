@@ -1,5 +1,25 @@
 export namespace main {
 	
+	export class UpdateChapterParams {
+	    name?: string;
+	    sequence?: number;
+	    content?: string;
+	    parent_id?: number;
+	    id: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateChapterParams(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.sequence = source["sequence"];
+	        this.content = source["content"];
+	        this.parent_id = source["parent_id"];
+	        this.id = source["id"];
+	    }
+	}
 	export class Book {
 	    id: number;
 	    name?: string;
@@ -160,26 +180,6 @@ export namespace main {
 		    }
 		    return a;
 		}
-	}
-	export class UpdateChapterParams {
-	    name?: string;
-	    sequence?: number;
-	    content?: string;
-	    parent_id?: number;
-	    id: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateChapterParams(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.sequence = source["sequence"];
-	        this.content = source["content"];
-	        this.parent_id = source["parent_id"];
-	        this.id = source["id"];
-	    }
 	}
 
 }

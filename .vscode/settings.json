@@ -49,8 +49,8 @@
   "presentation-mode.configBackup": {
     "editor.minimap.enabled": false,
     "workbench.activityBar.visible": true,
-    "workbench.statusBar.visible": true,
-    "window.zoomLevel": 1
+    "workbench.statusBar.visible": false,
+    "window.zoomLevel": 2
   },
   "workbench.activityBar.visible": true,
   "workbench.statusBar.visible": false,

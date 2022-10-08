@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 //go:embed db/schema.sql
 var ddl string
+
+const sequenceStep = 128.0
 
 var ctx = context.Background()
 
@@ -181,6 +184,16 @@ func getFloat(r any, fallback float64) float64 {
 	}
 	return fallback
 }
+
+// 获取小数的小数部分的长度
+func getDecimalLength(f float64) int {
+	s := fmt.Sprintf("%f", f)
+	if i := strings.Index(s, "."); i >= 0 {
+		return len(s) - i - 1
+	}
+	return 0
+}
+
 func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 	q, _, err := createQuery("books.db")
 	if err != nil {
@@ -195,7 +208,26 @@ func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 			panic(err)
 		}
 		max := getFloat(r, 0)
-		c.Sequence = Ptr(max + 1)
+		c.Sequence = Ptr(max + sequenceStep)
+	}
+	if l := getDecimalLength(*c.Sequence); l > 5 {
+		// TODO 对 sequence 进行重排
+		chapters, err := q.ListChaptersWithParentID(ctx, ListChaptersWithParentIDParams{
+			BookID:   c.BookID,
+			ParentID: c.ParentID,
+		})
+		if err != nil {
+			panic(err)
+		}
+		for i, chapter := range chapters {
+			chapter.Sequence = Ptr(float64(i + sequenceStep))
+			_, err := q.UpdateChapter(ctx, UpdateChapterParams{
+				Sequence: chapter.Sequence,
+			})
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 	chapter, err := q.CreateChapter(ctx, c)
 	if err != nil {
@@ -226,7 +258,7 @@ func (a *App) InsertChapterAfter(chapterID int64, c CreateChapterParams) (Chapte
 	if len(seqs) > 0 {
 		seq = (*c1.Sequence + *seqs[0]) / 2
 	} else {
-		seq = *c1.Sequence + 1.0
+		seq = *c1.Sequence + sequenceStep
 	}
 	newChapter, err := a.CreateChapter(CreateChapterParams{
 		BookID:   bookID,
@@ -274,7 +306,7 @@ func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, erro
 			panic(err)
 		}
 		max := getFloat(r, 0)
-		chapter.Sequence = Ptr(max + 1)
+		chapter.Sequence = Ptr(max + sequenceStep)
 		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{
 			ID:       chapter.ID,
 			Sequence: chapter.Sequence,
@@ -301,7 +333,7 @@ func (a *App) MoveChapter(t int, chapterId int64, targetId int64) (Chapter, erro
 		if len(seqs) > 0 {
 			seq = (*target.Sequence + *seqs[0]) / 2
 		} else {
-			seq = *target.Sequence + 1.0
+			seq = *target.Sequence + sequenceStep
 		}
 		chapter.Sequence = Ptr(seq)
 		newChapter, err := q.UpdateChapter(ctx, UpdateChapterParams{

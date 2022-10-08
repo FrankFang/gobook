@@ -221,6 +221,52 @@ func (q *Queries) ListChapters(ctx context.Context, bookID *int64) ([]Chapter, e
 	return items, nil
 }
 
+const listChaptersWithParentID = `-- name: ListChaptersWithParentID :many
+SELECT id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at FROM chapters
+WHERE book_id = ?
+AND parent_id = ?
+AND deleted_at IS NULL
+ORDER BY id
+`
+
+type ListChaptersWithParentIDParams struct {
+	BookID   *int64 `json:"book_id"`
+	ParentID *int64 `json:"parent_id"`
+}
+
+func (q *Queries) ListChaptersWithParentID(ctx context.Context, arg ListChaptersWithParentIDParams) ([]Chapter, error) {
+	rows, err := q.db.QueryContext(ctx, listChaptersWithParentID, arg.BookID, arg.ParentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Chapter
+	for rows.Next() {
+		var i Chapter
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.BookID,
+			&i.ParentID,
+			&i.Sequence,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateChapter = `-- name: UpdateChapter :one
 UPDATE chapters
 SET name = coalesce(@name, name),

@@ -4,6 +4,13 @@ WHERE book_id = ?
 AND deleted_at IS NULL
 ORDER BY id;
 
+-- name: ListChaptersWithParentID :many
+SELECT * FROM chapters
+WHERE book_id = ?
+AND parent_id = ?
+AND deleted_at IS NULL
+ORDER BY sequence;
+
 -- name: GetChapter :one
 SELECT * FROM chapters WHERE id = ? AND deleted_at IS NULL;
 

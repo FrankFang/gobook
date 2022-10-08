@@ -19,3 +19,4 @@ main.Book.prototype.convertValues
       }
       return a
     }
+export const modelsPatch = 'modelsPatch'

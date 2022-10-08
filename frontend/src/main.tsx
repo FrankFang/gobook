@@ -1,11 +1,13 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { HashRouter } from 'react-router-dom'
+import { modelsPatch } from './models-patch'
+import { createRoutes } from './routes'
 import '@unocss/reset/tailwind.css'
 import './assets/stylesheets/global.css'
 import 'virtual:uno.css'
-import { BrowserRouter, HashRouter } from 'react-router-dom'
-import { createRoutes } from './routes'
-import './models-patch'
+
+window?.console.log(modelsPatch)
 
 const container = document.getElementById('root')
 

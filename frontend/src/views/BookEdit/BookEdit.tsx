@@ -13,10 +13,18 @@ import { ChapterList } from './ChapterList'
 type Chapter = main.Chapter
 
 export const BookEdit: React.FC = () => {
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => e.key === 'Tab' && e.preventDefault()
+    document.addEventListener('keydown', fn)
+    return () => {
+      document.removeEventListener('keydown', fn)
+    }
+  }, [])
   const { bookId } = useParams<{ bookId: string }>()
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
-    findOlderBrother, findYoungerBrother, findFather, tree, moveChapter
+    findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, findChildrenInTree,
+    tree, flatTree, moveChapter
   } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
@@ -34,12 +42,12 @@ export const BookEdit: React.FC = () => {
           e.preventDefault()
           const shift = (e.nativeEvent as KeyboardEvent).shiftKey
           if (shift) {
-            const father = findFather(id, tree)
+            const father = findFatherInTree(id, tree)
             if (father) {
               moveChapter('insertAfter', id, father.id)
             }
           } else {
-            const brother = findOlderBrother(id, tree)
+            const brother = findOlderBrotherInTree(id, tree)
             if (brother) {
               moveChapter('append', id, brother.id)
             }
@@ -47,16 +55,18 @@ export const BookEdit: React.FC = () => {
         },
         ArrowUp: (e, id) => {
           e.preventDefault()
-          const brother = findOlderBrother(id, tree)
-          if (brother) { setFocused(brother.id) }
+          const index = flatTree.findIndex((n, i) => n.id === id)
+          const prev = flatTree[index - 1]
+          if (prev) { setFocused(prev.id) }
         },
         ArrowDown: (e, id) => {
           e.preventDefault()
-          const brother = findYoungerBrother(id, tree)
-          if (brother) { setFocused(brother.id) }
+          const index = flatTree.findIndex((n, i) => n.id === id)
+          const next = flatTree[index + 1]
+          if (next) { setFocused(next.id) }
         }
       }
-    }, [tree])
+    }, [tree, flatTree])
   return book
     ? <div h-screen flex flex-nowrap>
       <div w-20em h-screen b-1 shrink-0 flex flex-col>

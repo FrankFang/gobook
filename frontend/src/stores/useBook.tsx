@@ -18,15 +18,17 @@ interface State {
   book?: main.Book
   chapters: main.Chapter[]
   tree: Tree
+  flatTree: Tree
   fetchBook: (id?: number) => void
   updateLocalChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
   updateRemoteChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
   appendChapter: (id: number, attrs: Partial<Omit<Chapter, 'id'>>) => void
-  findSiblings: (id: number, tree: Tree) => Node[]
-  findOlderBrother: (id: number, tree: Tree) => Node | undefined
-  findYoungerBrother: (id: number, tree: Tree) => Node | undefined
-  findFather: (id: number, tree: Tree) => Node | undefined
-  generateChapterTree: (chapters: Chapter[]) => Tree
+  findSiblingsInTree: (id: number, tree: Tree) => Node[]
+  findOlderBrotherInTree: (id: number, tree: Tree) => Node | undefined
+  findYoungerBrotherInTree: (id: number, tree: Tree) => Node | undefined
+  findFatherInTree: (id: number, tree: Tree) => Node | undefined
+  findChildrenInTree: (id: number, tree: Tree) => Node[]
+  findSelfInTree: (id: number, tree: Tree) => Node | undefined
   moveChapter: (moveType: keyof typeof moveTypeMap, chapterId: number, targetId: number) => void
 }
 
@@ -37,6 +39,7 @@ export const useBook = create<State>()(
         book: undefined,
         chapters: [],
         tree: [],
+        flatTree: [],
         fetchBook: async id => {
           if (id === undefined) { return }
           const bwc = await GetBookWithChapters(id)
@@ -67,7 +70,7 @@ export const useBook = create<State>()(
             state.chapters.push(chapter)
           })
         },
-        findSiblings: (chapterId, tree) => {
+        findSiblingsInTree: (chapterId, tree) => {
           const currentNode = findNodeById(tree, chapterId)
           if (!currentNode) { throw new Error('chapter is not found') }
           let children = []
@@ -80,35 +83,29 @@ export const useBook = create<State>()(
           }
           return children
         },
-        findOlderBrother: (chapterId, tree) => {
-          const children = get().findSiblings(chapterId, tree)
+        findOlderBrotherInTree: (chapterId, tree) => {
+          const children = get().findSiblingsInTree(chapterId, tree)
           const currentIndex = children.findIndex(c => c.id === chapterId)
           return children[currentIndex - 1]
         },
-        findYoungerBrother: (chapterId, tree) => {
-          const children = get().findSiblings(chapterId, tree)
+        findYoungerBrotherInTree: (chapterId, tree) => {
+          const children = get().findSiblingsInTree(chapterId, tree)
           const currentIndex = children.findIndex(c => c.id === chapterId)
           return children[currentIndex + 1]
         },
-        findFather: (id, tree) => {
+        findFatherInTree: (id, tree) => {
           const currentNode = findNodeById(tree, id)
           if (!currentNode) { throw new Error('chapter is not found') }
           if (!currentNode.parent_id) { return undefined }
           return findNodeById(tree, currentNode.parent_id)
         },
-        generateChapterTree: chapters => {
-          const tree: Tree = []
-          for (const chapter of chapters) {
-            const copy = JSON.parse(JSON.stringify(chapter))
-            const node: Node = { ...copy, children: [], parent: null }
-            if (copy.parent_id) {
-              const parent = findNodeById(tree, copy.parent_id)
-              if (parent) { insertNode(parent.children, node, parent) }
-            } else {
-              insertNode(tree, node)
-            }
-          }
-          return tree
+        findChildrenInTree: (id, tree) => {
+          const currentNode = findNodeById(tree, id)
+          if (!currentNode) { throw new Error('chapter is not found') }
+          return currentNode.children
+        },
+        findSelfInTree: (id, tree) => {
+          return findNodeById(tree, id)
         },
         moveChapter: async (type, chapterId, targetId) => {
           const newChapter = await MoveChapter(moveTypeMap[type], chapterId, targetId)
@@ -127,11 +124,36 @@ useBook.subscribe(
   state => state.chapters,
   chapters => {
     const state = useBook.getState()
-    const tree = state.generateChapterTree(chapters)
-    useBook.setState({ ...state, tree })
+    const tree = generateChapterTree(chapters)
+    const flatTree = flattenTree(tree)
+    useBook.setState({ ...state, tree, flatTree })
   }
 )
-
+function flattenTree(tree: Tree) {
+  const result: Tree = []
+  const flatten = (tree: Tree) => {
+    for (const node of tree) {
+      result.push(node)
+      if (node.children) { flatten(node.children) }
+    }
+  }
+  flatten(tree)
+  return result
+}
+function generateChapterTree(chapters: Chapter[]): Tree {
+  const tree: Tree = []
+  for (const chapter of chapters) {
+    const copy = JSON.parse(JSON.stringify(chapter))
+    const node: Node = { ...copy, children: [], parent: null }
+    if (copy.parent_id) {
+      const parent = findNodeById(tree, copy.parent_id)
+      if (parent) { insertNode(parent.children, node, parent) }
+    } else {
+      insertNode(tree, node)
+    }
+  }
+  return tree
+}
 function insertNode(array: Node[], node: Node, parent?: Node) {
   const index = array.findIndex(c => c.sequence! > node.sequence!)
   const insertPosition = index >= 0 ? index : array.length

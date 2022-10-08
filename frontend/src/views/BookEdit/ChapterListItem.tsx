@@ -1,7 +1,7 @@
 import type { ChangeEvent, FocusEvent, KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { Collapse } from 'react-collapse'
 import { useDebounce } from 'react-use'
+import { useToggle } from '../../hooks/useToggle'
 import type { ChapterListProps } from './ChapterList'
 
 export type ChapterListItemProps = {
@@ -19,7 +19,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   } = props
   const level = path.length
   const style = { paddingLeft: `${16 + level * 4}px` }
-  const [open, setOpen] = useState(true)
+  const [visible, toggleVisible] = useToggle(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
     if (id === focused) {
@@ -36,15 +36,16 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
     _onInput(e, id)
     setLastChange(new Date())
   }
+  const childrenStyle = { display: visible ? 'block' : 'none' }
   return (
     <div style={style} className="menuItem">
       <label py-4px flex items-center className="menuItem-name">
         {hasChildren
-          ? open
+          ? visible
             ? <i i-bi-chevron-down shrink-0 mr-4px
-                onClick={() => setOpen(false)} />
+                onClick={() => toggleVisible(false)} />
             : <i i-bi-chevron-right shrink-0 mr-4px
-                onClick={() => setOpen(true)} />
+                onClick={() => toggleVisible(true)} />
           : <i i-bi-record shrink-0 mr-4px />
             }
         <input
@@ -55,7 +56,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
           onFocus={(e: FocusEvent<HTMLInputElement>) => onSelect?.(e, id)}
         />
       </label>
-      <Collapse isOpened={open}>{children}</Collapse>
+      <div style={childrenStyle}>{children}</div>
     </div>
   )
 }

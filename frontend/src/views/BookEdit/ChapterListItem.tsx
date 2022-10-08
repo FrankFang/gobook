@@ -23,9 +23,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const [visible, toggleVisible] = useToggle(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
   useEffect(() => {
-    // if (id === focused) {
-    //   inputRef.current?.focus()
-    // }
+    if (id === focused) { inputRef.current?.focus() }
   }, [focused])
   const [lastChange, setLastChange] = useState<Date>()
   useDebounce(() => {

@@ -1,12 +1,15 @@
 import * as React from 'react'
-import type { ChangeEvent, ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import logo from '../../assets/icons/logo.svg'
 import { useBook } from '../../stores/useBook'
+import 'github-markdown-css'
 
 import type { main } from '../../../wailsjs/go/models'
 import { Button } from '../../components/Button'
+import { useToggle } from '../../hooks/useToggle'
+import { RenderMarkdown } from '../../../wailsjs/go/main/App'
 import s from './BookEdit.module.scss'
 import { ChapterList } from './ChapterList'
 
@@ -20,11 +23,10 @@ export const BookEdit: React.FC = () => {
       document.removeEventListener('keydown', fn)
     }
   }, [])
-  const { bookId } = useParams<{ bookId: string }>()
+  const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>()
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
-    findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, findChildrenInTree,
-    tree, flatTree, moveChapter, deleteChapter, findSelfInTree
+    findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, tree, flatTree, moveChapter, deleteChapter
   } = useBook()
   useEffect(() => {
     if (bookId === undefined) { return }
@@ -72,7 +74,7 @@ export const BookEdit: React.FC = () => {
               moveChapter('insertBefore', id, brother.id)
             }
           } else {
-            const index = flatTree.findIndex((n, i) => n.id === id)
+            const index = flatTree.findIndex(n => n.id === id)
             const prev = flatTree[index - 1]
             if (prev) { setFocused(prev.id) }
           }
@@ -86,7 +88,7 @@ export const BookEdit: React.FC = () => {
               moveChapter('insertAfter', id, brother.id)
             }
           } else {
-            const index = flatTree.findIndex((n, i) => n.id === id)
+            const index = flatTree.findIndex(n => n.id === id)
             const next = flatTree[index + 1]
             if (next) { setFocused(next.id) }
           }
@@ -94,8 +96,38 @@ export const BookEdit: React.FC = () => {
       }
     }, [tree, flatTree])
   const nav = useNavigate()
+  const [dragging, toggleDragging] = useToggle(false)
+  const [dragFrom, setDragFrom] = useState<[number, number]>([0, 0])
+  const onDragStart: MouseEventHandler<HTMLDivElement> = e => {
+    toggleDragging(true)
+    setDragFrom([e.clientX, e.clientY])
+  }
+  const onDragEnd: MouseEventHandler<HTMLDivElement> = () => {
+    toggleDragging(false)
+    setDragFrom([0, 0])
+    localStorage.setItem('size', size.toString())
+  }
+  const [size, setSize] = useState<number>(() => {
+    return parseInt(localStorage.getItem('size') || '250')
+  })
+  const onDragging: MouseEventHandler<HTMLDivElement> = e => {
+    if (!dragging) { return }
+    const [x, y] = [e.clientX, e.clientY]
+    const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
+    const width = document.documentElement.clientWidth
+    setSize(Math.max(Math.min(size - dx, width / 2), 200))
+    setDragFrom([x, y])
+  }
+  const [preview, setPreview] = useState<string>('')
+  const currentContent = chapterId && chapters?.find(c => c.id === parseInt(chapterId))?.content
+  useEffect(() => {
+    if (currentContent === undefined) { return }
+    RenderMarkdown(currentContent).then(html => {
+      setPreview(html)
+    })
+  }, [currentContent])
   return book
-    ? <div h-screen flex flex-nowrap>
+    ? <div h-screen flex flex-nowrap onMouseMove={onDragging} onMouseUp={onDragEnd}>
       <div w-20em h-screen shrink-0 flex flex-col>
         <Panels>
           <li overflow-hidden grow-0 flex flex-col shrink-0>
@@ -129,10 +161,17 @@ export const BookEdit: React.FC = () => {
           <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
         </div>
       </div>
-      <div b-1 grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
+      <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
         <Outlet/>
       </div>
-      <div w-20em b-1 shrink-0></div>
+      <div z-1 shrink-0 relative style={{ width: size }}>
+        <div h-full w-16px left--8px absolute top-0 hover-bg-gray-300
+          onMouseDown={onDragStart} cursor-e-resize
+        />
+        <div h-full overflow-auto>
+          <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }}/>
+        </div>
+      </div>
     </div>
     : <div>加载中……</div>
 }

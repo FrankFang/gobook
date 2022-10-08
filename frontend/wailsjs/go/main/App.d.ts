@@ -26,6 +26,8 @@ export function ListChapters(arg1:number):Promise<Array<main.Chapter>>;
 
 export function MoveChapter(arg1:number,arg2:number,arg3:number):Promise<main.Chapter>;
 
+export function RenderMarkdown(arg1:string):Promise<string>;
+
 export function UpdateChapter(arg1:main.UpdateChapterParams):Promise<main.Chapter>;
 
 export function UploadImage(arg1:string):Promise<string>;

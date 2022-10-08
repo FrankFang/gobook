@@ -50,6 +50,10 @@ export function MoveChapter(arg1, arg2, arg3) {
   return window['go']['main']['App']['MoveChapter'](arg1, arg2, arg3);
 }
 
+export function RenderMarkdown(arg1) {
+  return window['go']['main']['App']['RenderMarkdown'](arg1);
+}
+
 export function UpdateChapter(arg1) {
   return window['go']['main']['App']['UpdateChapter'](arg1);
 }

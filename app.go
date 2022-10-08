@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	_ "embed"
@@ -14,6 +15,10 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vincent-petithory/dataurl"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 func init() {
@@ -430,7 +435,6 @@ func (a *App) UploadImage(url string) (string, error) {
 	if d.MediaType.Type == "image" {
 		fmt.Println("image")
 	}
-	// 将 dataURL.Data 保存到文件中
 	p, err := os.Getwd()
 	if err != nil {
 		log.Fatalln(err)
@@ -446,6 +450,26 @@ func (a *App) UploadImage(url string) (string, error) {
 		log.Fatalln(err)
 	}
 	return filename, nil
+}
+
+func (a *App) RenderMarkdown(source string) (string, error) {
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
+	ctx := parser.NewContext(parser.WithIDs(&myIDs{}))
+	// 把 source 转为 []byte
+	var buf bytes.Buffer
+	if err := md.Convert([]byte(source), &buf, parser.WithContext(ctx)); err != nil {
+		log.Fatalln(err)
+	}
+	return buf.String(), nil
 }
 
 // helpers

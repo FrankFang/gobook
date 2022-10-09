@@ -1,67 +1,67 @@
-import * as React from 'react'
-import type { ChangeEventHandler, ClipboardEventHandler } from 'react'
+import type { MouseEventHandler } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useDebounce } from 'react-use'
+import { RenderMarkdown } from '../../wailsjs/go/main/App'
+import { useToggle } from '../hooks/useToggle'
 import { useBook } from '../stores/useBook'
-import { UploadImage } from '../../wailsjs/go/main/App'
+import { Editor } from './BookEdit/Editor'
+
 export const ChapterEdit: React.FC = () => {
-  const { chapters, updateLocalChapter, updateRemoteChapter } = useBook()
-  const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>()
-  const chapter = chapters.find(c => c.id === parseInt(chapterId!))
-  const onChange: ChangeEventHandler<HTMLTextAreaElement> = e => {
-    const content = e.target.value
-    if (chapterId === undefined) { return }
-    updateLocalChapter(parseInt(chapterId), { content })
+  const { chapterId } = useParams<{ bookId: string; chapterId: string }>()
+  const [dragging, toggleDragging] = useToggle(false)
+  const [dragFrom, setDragFrom] = useState([-1, -1])
+  const [breakpoint, setBreakpoint] = useState<[number, number, '<' | '>']>([-1, -1, '<'])
+  const onDragStart: MouseEventHandler<HTMLDivElement> = e => {
+    toggleDragging(true)
+    setDragFrom([e.clientX, e.clientY])
   }
-  useDebounce(() => {
-    if (chapter === undefined) { return }
-    updateRemoteChapter(chapter.id, { content: chapter.content })
-  }, 1000, [chapter, chapter?.content])
-  const onPaste: ClipboardEventHandler<HTMLTextAreaElement> = e => {
-    // 获取剪贴板中的图片
-    const items = e.clipboardData?.items
-    if (items === undefined) { return }
-    if (chapter === undefined) { return }
-    if (chapter.content === undefined) { return }
-    const textarea = (e.target as HTMLTextAreaElement)
-    const position = textarea.selectionEnd
-    const start = chapter.content.slice(0, position)
-    const end = chapter.content.slice(position)
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      if (item.kind === 'file' && item.type.includes('image')) {
-        const file = item.getAsFile()
-        if (!file) { return }
-        // convert file to base64 string
-        const reader = new FileReader()
-        reader.onload = async e => {
-          const dataUrl = e.target?.result
-          if (!dataUrl) { return }
-          const relativePath = await UploadImage(dataUrl as string)
-          const insert = `![${file.name}](${relativePath})`
-          updateLocalChapter(
-            parseInt(chapterId!),
-            {
-              content: `${start}${insert}${end}`
-            }
-          )
-          setTimeout(() => {
-            textarea.selectionStart = position + insert.length
-            textarea.selectionEnd = position + insert.length
-          })
-        }
-        reader.readAsDataURL(file)
-      }
+  const onDragEnd: MouseEventHandler<HTMLDivElement> = () => {
+    toggleDragging(false)
+    setDragFrom([0, 0])
+    localStorage.setItem('size', size.toString())
+  }
+  const [size, setSize] = useState<number>(() => {
+    return parseInt(localStorage.getItem('size') || '250')
+  })
+  const onDragging: MouseEventHandler<HTMLDivElement> = e => {
+    if (!dragging) { return }
+    const [x, y] = [e.clientX, e.clientY]
+    if (breakpoint[2] === '<' && x < breakpoint[0]) { return }
+    if (breakpoint[2] === '>' && x > breakpoint[0]) { return }
+    const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
+    const width = document.documentElement.clientWidth
+    const newSize = Math.max(Math.min(size - dx, width / 2), 200)
+    if (newSize >= width / 2) {
+      setBreakpoint([x, y, '<'])
+    } else if (newSize <= 200) {
+      setBreakpoint([x, y, '>'])
     }
+    setSize(newSize)
+    setDragFrom([x, y])
   }
+  const { chapters } = useBook()
+  const [preview, setPreview] = useState<string>('')
+  const currentContent = chapterId && chapters?.find(c => c.id === parseInt(chapterId))?.content
+  useEffect(() => {
+    if (currentContent === undefined) { return }
+    RenderMarkdown(currentContent).then(html => {
+      setPreview(html)
+    })
+  }, [currentContent])
   return (
-    chapter
-      ? <div flex flex-col>
-          <textarea text-lg h-screen grow-1 bg-gray-250 p-2
-            value={chapter.content} onChange={onChange}
-            onPaste={onPaste}
-            />
+    <div flex flex-nowrap h-full
+      onMouseMove={onDragging} onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
+      <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
+        <Editor />
+      </div>
+      <div z-1 shrink-0 relative style={{ width: size }}>
+        <div h-full w-16px left--8px absolute top-0 hover-bg-gray-300
+          onMouseDown={onDragStart} cursor-e-resize
+        />
+        <div h-full overflow-auto>
+          <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }} />
         </div>
-      : <div>404</div>
+      </div>
+    </div>
   )
 }

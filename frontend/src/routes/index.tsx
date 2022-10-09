@@ -1,9 +1,9 @@
 import { Outlet, Route, Routes } from 'react-router-dom'
-import { ChapterEdit } from '../views/ChapterEdit'
 import { BookEdit } from '../views/BookEdit/BookEdit'
 import { Empty } from '../views/Empty'
 import { Home } from '../views/Home/Home'
 import { NoSelectedChapter } from '../components/NoSelectedChapter'
+import { ChapterEdit } from '../views/ChapterEdit'
 export const createRoutes = () => {
   return (
     <Routes>
@@ -20,7 +20,7 @@ export const createRoutes = () => {
                 <Route index element={<Empty />} />
                 <Route path=":chapterId" element={<Outlet />}>
                   <Route index element={<Empty />} />
-                  <Route path="edit" element={<ChapterEdit />} />
+                  <Route path="edit" element={<Empty />} />
                 </Route>
               </Route>
             </Route>

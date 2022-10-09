@@ -22,9 +22,9 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
   const style = { paddingLeft: `${16 + level * 4}px` }
   const [visible, toggleVisible] = useToggle(true)
   const inputRef = useRef<HTMLInputElement | null>(null)
-  useEffect(() => {
-    if (id === focused) { inputRef.current?.focus() }
-  }, [focused])
+  // useEffect(() => {
+  //   if (id === focused) { inputRef.current?.focus() }
+  // }, [focused])
   const [lastChange, setLastChange] = useState<Date>()
   useDebounce(() => {
     if (id && onDebouncedChange && value !== undefined) {

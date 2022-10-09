@@ -1,6 +1,6 @@
 import * as React from 'react'
-import type { MouseEventHandler, ReactNode } from 'react'
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
 import logo from '../../assets/icons/logo.svg'
 import { useBook } from '../../stores/useBook'
@@ -8,8 +8,6 @@ import 'github-markdown-css'
 
 import type { main } from '../../../wailsjs/go/models'
 import { Button } from '../../components/Button'
-import { useToggle } from '../../hooks/useToggle'
-import { RenderMarkdown } from '../../../wailsjs/go/main/App'
 import s from './BookEdit.module.scss'
 import { ChapterList } from './ChapterList'
 
@@ -23,7 +21,7 @@ export const BookEdit: React.FC = () => {
       document.removeEventListener('keydown', fn)
     }
   }, [])
-  const { bookId, chapterId } = useParams<{ bookId: string; chapterId: string }>()
+  const { bookId } = useParams<{ bookId: string; chapterId: string }>()
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
     findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, tree, flatTree, moveChapter, deleteChapter
@@ -96,55 +94,42 @@ export const BookEdit: React.FC = () => {
       }
     }, [tree, flatTree])
   const nav = useNavigate()
-  const [dragging, toggleDragging] = useToggle(false)
-  const [dragFrom, setDragFrom] = useState([-1, -1])
-  const [breakpoint, setBreakpoint] = useState<[number, number, '<' | '>']>([-1, -1, '<'])
-  const onDragStart: MouseEventHandler<HTMLDivElement> = e => {
-    toggleDragging(true)
-    setDragFrom([e.clientX, e.clientY])
-  }
-  const onDragEnd: MouseEventHandler<HTMLDivElement> = () => {
-    toggleDragging(false)
-    setDragFrom([0, 0])
-    localStorage.setItem('size', size.toString())
-  }
-  const [size, setSize] = useState<number>(() => {
-    return parseInt(localStorage.getItem('size') || '250')
+
+  const Wrapper: React.FC< { children: ReactNode } > = React.memo(({ children }) => {
+    return <div h-screen flex flex-nowrap>{children}</div>
   })
-  const onDragging: MouseEventHandler<HTMLDivElement> = e => {
-    if (!dragging) { return }
-    const [x, y] = [e.clientX, e.clientY]
-    if (breakpoint[2] === '<' && x < breakpoint[0]) { return }
-    if (breakpoint[2] === '>' && x > breakpoint[0]) { return }
-    const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
-    const width = document.documentElement.clientWidth
-    const newSize = Math.max(Math.min(size - dx, width / 2), 200)
-    if (newSize >= width / 2) {
-      setBreakpoint([x, y, '<'])
-    } else if (newSize <= 200) {
-      setBreakpoint([x, y, '>'])
-    }
-    setSize(newSize)
-    setDragFrom([x, y])
-  }
-  const [preview, setPreview] = useState<string>('')
-  const currentContent = chapterId && chapters?.find(c => c.id === parseInt(chapterId))?.content
-  useEffect(() => {
-    if (currentContent === undefined) { return }
-    RenderMarkdown(currentContent).then(html => {
-      setPreview(html)
-    })
-  }, [currentContent])
+  const Aside: React.FC< { children: ReactNode } > = React.memo(({ children }) => {
+    return <div w-20em h-screen shrink-0 flex flex-col>{children}</div>
+  })
+  const Footer: React.FC = React.memo(() => {
+    return (
+      <div p-16px shrink-0 flex items-center gap-x-2>
+        <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
+      </div>
+    )
+  })
+  const Main: React.FC<{ children: ReactNode }> = React.memo(({ children }) => {
+    return <main grow-1 >{children}</main>
+  })
+
+  const Panel: React.FC<{ children: ReactNode; active?: boolean }>
+  = React.memo(({ children, active = false }) => {
+    return active
+      ? <li overflow-hidden grow-1 flex flex-col shrink-1>{children}</li>
+      : <li overflow-hidden grow-0 flex flex-col shrink-0>{children}</li>
+  })
+
   return book
-    ? <div h-screen flex flex-nowrap onMouseMove={onDragging} onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
-        <div w-20em h-screen shrink-0 flex flex-col>
+    ? (
+      <Wrapper>
+        <Aside>
           <Panels>
-            <li overflow-hidden grow-0 flex flex-col shrink-0>
+            <Panel>
               <div p-16px>
                 <Link to="/"><Button color="white" size="small">返回首页</Button></Link>
-              </div>
-            </li>
-            <li overflow-hidden grow-1 flex flex-col shrink-1>
+              </div>)
+            </Panel>
+            <Panel active>
               <Header>撰写</Header>
               <div grow-1 overflow-auto h-full shadow shadow-inset>
                 <ChapterList chapters={chapters} focused={focused}
@@ -156,44 +141,33 @@ export const BookEdit: React.FC = () => {
                   }}
                   onFocus={(e, id) => {
                     nav(`/books/${book.id}/edit/chapters/${id}/edit`)
-                    setFocused(id)
+                    // setFocused(id)
                   }}
                   onDebouncedChange={(id, name) => updateRemoteChapter(id, { name })}
                 />
               </div>
-            </li>
-            <li overflow-hidden grow-0 flex flex-col shrink-0>
+            </Panel>
+            <Panel>
               <Link to={`/books/${bookId}/publish`}><Header>发布</Header></Link>
-            </li>
+            </Panel>
           </Panels>
-          <div p-16px shrink-0 flex items-center gap-x-2>
-            <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
-          </div>
-        </div>
-        <div grow-1 flex flex-nowrap h-full>
-          <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
-            <Outlet />
-          </div>
-          <div z-1 shrink-0 relative style={{ width: size }}>
-            <div h-full w-16px left--8px absolute top-0 hover-bg-gray-300
-              onMouseDown={onDragStart} cursor-e-resize
-            />
-            <div h-full overflow-auto>
-              <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }} />
-            </div>
-          </div>
-        </div>
-      </div>
+          <Footer/>
+        </Aside>
+        <Main>
+          <Outlet />
+        </Main>
+      </Wrapper>
+      )
     : <div>加载中……</div>
 }
 
-const Header: React.FC<{ children: ReactNode }> = ({ children }) => (
+const Header: React.FC<{ children: ReactNode }> = React.memo(({ children }) => (
   <div lh-24px py-12px bg-gray-250 text-20px px-16px shrink-0>
     {children}
   </div>
-)
-const Panels: React.FC<{ children: ReactNode }> = ({ children }) => (
+))
+const Panels: React.FC<{ children: ReactNode }> = React.memo(({ children }) => (
   <ol grow-1 flex flex-col justify-start overflow-hidden className={s.menu}>
     {children}
   </ol>
-)
+))

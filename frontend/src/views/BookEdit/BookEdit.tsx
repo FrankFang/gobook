@@ -97,7 +97,8 @@ export const BookEdit: React.FC = () => {
     }, [tree, flatTree])
   const nav = useNavigate()
   const [dragging, toggleDragging] = useToggle(false)
-  const [dragFrom, setDragFrom] = useState<[number, number]>([0, 0])
+  const [dragFrom, setDragFrom] = useState([-1, -1])
+  const [breakpoint, setBreakpoint] = useState<[number, number, '<' | '>']>([-1, -1, '<'])
   const onDragStart: MouseEventHandler<HTMLDivElement> = e => {
     toggleDragging(true)
     setDragFrom([e.clientX, e.clientY])
@@ -113,9 +114,17 @@ export const BookEdit: React.FC = () => {
   const onDragging: MouseEventHandler<HTMLDivElement> = e => {
     if (!dragging) { return }
     const [x, y] = [e.clientX, e.clientY]
+    if (breakpoint[2] === '<' && x < breakpoint[0]) { return }
+    if (breakpoint[2] === '>' && x > breakpoint[0]) { return }
     const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
     const width = document.documentElement.clientWidth
-    setSize(Math.max(Math.min(size - dx, width / 2), 200))
+    const newSize = Math.max(Math.min(size - dx, width / 2), 200)
+    if (newSize >= width / 2) {
+      setBreakpoint([x, y, '<'])
+    } else if (newSize <= 200) {
+      setBreakpoint([x, y, '>'])
+    }
+    setSize(newSize)
     setDragFrom([x, y])
   }
   const [preview, setPreview] = useState<string>('')
@@ -127,52 +136,54 @@ export const BookEdit: React.FC = () => {
     })
   }, [currentContent])
   return book
-    ? <div h-screen flex flex-nowrap onMouseMove={onDragging} onMouseUp={onDragEnd}>
-      <div w-20em h-screen shrink-0 flex flex-col>
-        <Panels>
-          <li overflow-hidden grow-0 flex flex-col shrink-0>
-            <div p-16px>
-              <Link to="/"><Button color="white" size="small">返回首页</Button></Link>
+    ? <div h-screen flex flex-nowrap onMouseMove={onDragging} onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
+        <div w-20em h-screen shrink-0 flex flex-col>
+          <Panels>
+            <li overflow-hidden grow-0 flex flex-col shrink-0>
+              <div p-16px>
+                <Link to="/"><Button color="white" size="small">返回首页</Button></Link>
+              </div>
+            </li>
+            <li overflow-hidden grow-1 flex flex-col shrink-1>
+              <Header>撰写</Header>
+              <div grow-1 overflow-auto h-full shadow shadow-inset>
+                <ChapterList chapters={chapters} focused={focused}
+                  onInput={(e, id) => {
+                    updateLocalChapter(id, { name: e.target.value })
+                  }}
+                  onKeyDown={(e, id) => {
+                    map[e.key]?.(e, id)
+                  }}
+                  onFocus={(e, id) => {
+                    nav(`/books/${book.id}/edit/chapters/${id}/edit`)
+                    setFocused(id)
+                  }}
+                  onDebouncedChange={(id, name) => updateRemoteChapter(id, { name })}
+                />
+              </div>
+            </li>
+            <li overflow-hidden grow-0 flex flex-col shrink-0>
+              <Link to={`/books/${bookId}/publish`}><Header>发布</Header></Link>
+            </li>
+          </Panels>
+          <div p-16px shrink-0 flex items-center gap-x-2>
+            <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
+          </div>
+        </div>
+        <div grow-1 flex flex-nowrap h-full>
+          <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
+            <Outlet />
+          </div>
+          <div z-1 shrink-0 relative style={{ width: size }}>
+            <div h-full w-16px left--8px absolute top-0 hover-bg-gray-300
+              onMouseDown={onDragStart} cursor-e-resize
+            />
+            <div h-full overflow-auto>
+              <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }} />
             </div>
-          </li>
-          <li overflow-hidden grow-1 flex flex-col shrink-1>
-            <Header>撰写</Header>
-            <div grow-1 overflow-auto h-full shadow shadow-inset>
-              <ChapterList chapters={chapters} focused={focused}
-                onInput={(e, id) => {
-                  updateLocalChapter(id, { name: e.target.value })
-                }}
-                onKeyDown={(e, id) => {
-                  map[e.key]?.(e, id)
-                }}
-                onFocus={(e, id) => {
-                  nav(`/books/${book.id}/edit/chapters/${id}/edit`)
-                  setFocused(id)
-                }}
-                onDebouncedChange={(id, name) => updateRemoteChapter(id, { name }) }
-              />
-            </div>
-          </li>
-          <li overflow-hidden grow-0 flex flex-col shrink-0>
-            <Header>发布</Header>
-          </li>
-        </Panels>
-        <div p-16px shrink-0 flex items-center gap-x-2>
-          <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
+          </div>
         </div>
       </div>
-      <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
-        <Outlet/>
-      </div>
-      <div z-1 shrink-0 relative style={{ width: size }}>
-        <div h-full w-16px left--8px absolute top-0 hover-bg-gray-300
-          onMouseDown={onDragStart} cursor-e-resize
-        />
-        <div h-full overflow-auto>
-          <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }}/>
-        </div>
-      </div>
-    </div>
     : <div>加载中……</div>
 }
 

@@ -13,6 +13,7 @@ export const createRoutes = () => {
           <Route index element={<Empty />} />
           <Route path=":bookId" element={<Outlet />}>
             <Route index element={<Empty />} />
+            <Route path="publish" element={<Empty />} />
             <Route path="edit" element={<BookEdit />}>
               <Route index element={<NoSelectedChapter />} />
               <Route path="chapters" element={<Outlet />}>

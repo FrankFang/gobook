@@ -95,29 +95,38 @@ export const BookEdit: React.FC = () => {
     }, [tree, flatTree])
   const nav = useNavigate()
 
-  const Wrapper: React.FC< { children: ReactNode } > = React.memo(({ children }) => {
-    return <div h-screen flex flex-nowrap>{children}</div>
-  })
-  const Aside: React.FC< { children: ReactNode } > = React.memo(({ children }) => {
-    return <div w-20em h-screen shrink-0 flex flex-col>{children}</div>
-  })
-  const Footer: React.FC = React.memo(() => {
-    return (
+  const Wrapper: React.FC< { children: ReactNode } > = useMemo(() =>
+    ({ children }) => <div h-screen flex flex-nowrap>{children}</div>
+  , [])
+  const Aside: React.FC< { children: ReactNode } > = useMemo(() =>
+    ({ children }) => <div w-20em h-screen shrink-0 flex flex-col>{children}</div>
+  , [])
+  const Footer: React.FC = useMemo(() =>
+    () => (
       <div p-16px shrink-0 flex items-center gap-x-2>
         <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
       </div>
-    )
-  })
-  const Main: React.FC<{ children: ReactNode }> = React.memo(({ children }) => {
-    return <main grow-1 >{children}</main>
-  })
+    ), [])
+  const Main: React.FC<{ children: ReactNode }> = useMemo(() =>
+    ({ children }) => <main grow-1 >{children}</main>
+  , [])
 
   const Panel: React.FC<{ children: ReactNode; active?: boolean }>
-  = React.memo(({ children, active = false }) => {
-    return active
+  = useMemo(() => ({ children, active = false }) =>
+    active
       ? <li overflow-hidden grow-1 flex flex-col shrink-1>{children}</li>
       : <li overflow-hidden grow-0 flex flex-col shrink-0>{children}</li>
-  })
+  , [])
+  const Header: React.FC<{ children: ReactNode }> = useMemo(() => ({ children }) => (
+  <div lh-24px py-12px bg-gray-250 text-20px px-16px shrink-0>
+    {children}
+  </div>
+  ), [])
+  const Panels: React.FC<{ children: ReactNode }> = useMemo(() => ({ children }) => (
+  <ol grow-1 flex flex-col justify-start overflow-hidden className={s.menu}>
+    {children}
+  </ol>
+  ), [s.menu])
 
   return book
     ? (
@@ -141,7 +150,7 @@ export const BookEdit: React.FC = () => {
                   }}
                   onFocus={(e, id) => {
                     nav(`/books/${book.id}/edit/chapters/${id}/edit`)
-                    // setFocused(id)
+                    setFocused(id)
                   }}
                   onDebouncedChange={(id, name) => updateRemoteChapter(id, { name })}
                 />
@@ -161,13 +170,3 @@ export const BookEdit: React.FC = () => {
     : <div>加载中……</div>
 }
 
-const Header: React.FC<{ children: ReactNode }> = React.memo(({ children }) => (
-  <div lh-24px py-12px bg-gray-250 text-20px px-16px shrink-0>
-    {children}
-  </div>
-))
-const Panels: React.FC<{ children: ReactNode }> = React.memo(({ children }) => (
-  <ol grow-1 flex flex-col justify-start overflow-hidden className={s.menu}>
-    {children}
-  </ol>
-))

@@ -20,7 +20,7 @@ export const createRoutes = () => {
                 <Route index element={<Empty />} />
                 <Route path=":chapterId" element={<Outlet />}>
                   <Route index element={<Empty />} />
-                  <Route path="edit" element={<Empty />} />
+                  <Route path="edit" element={<ChapterEdit />} />
                 </Route>
               </Route>
             </Route>

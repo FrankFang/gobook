@@ -1,5 +1,5 @@
 import type { MouseEventHandler } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { RenderMarkdown } from '../../wailsjs/go/main/App'
 import { useToggle } from '../hooks/useToggle'
@@ -12,6 +12,7 @@ export const ChapterEdit: React.FC = () => {
   const [dragFrom, setDragFrom] = useState([-1, -1])
   const [breakpoint, setBreakpoint] = useState<[number, number, '<' | '>']>([-1, -1, '<'])
   const onDragStart: MouseEventHandler<HTMLDivElement> = e => {
+    e.preventDefault()
     toggleDragging(true)
     setDragFrom([e.clientX, e.clientY])
   }
@@ -21,7 +22,7 @@ export const ChapterEdit: React.FC = () => {
     localStorage.setItem('size', size.toString())
   }
   const [size, setSize] = useState<number>(() => {
-    return parseInt(localStorage.getItem('size') || '250')
+    return parseInt(localStorage.getItem('size') || '200')
   })
   const onDragging: MouseEventHandler<HTMLDivElement> = e => {
     if (!dragging) { return }
@@ -29,9 +30,9 @@ export const ChapterEdit: React.FC = () => {
     if (breakpoint[2] === '<' && x < breakpoint[0]) { return }
     if (breakpoint[2] === '>' && x > breakpoint[0]) { return }
     const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
-    const width = document.documentElement.clientWidth
-    const newSize = Math.max(Math.min(size - dx, width / 2), 200)
-    if (newSize >= width / 2) {
+    const width = wrapper.current!.clientWidth
+    const newSize = Math.max(Math.min(size - dx, width * 0.7), 200)
+    if (newSize >= width * 0.7) {
       setBreakpoint([x, y, '<'])
     } else if (newSize <= 200) {
       setBreakpoint([x, y, '>'])
@@ -48,8 +49,9 @@ export const ChapterEdit: React.FC = () => {
       setPreview(html)
     })
   }, [currentContent])
+  const wrapper = useRef<HTMLDivElement>(null)
   return (
-    <div flex flex-nowrap h-full
+    <div ref={wrapper} flex flex-nowrap h-full
       onMouseMove={onDragging} onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
       <div grow-1 shrink-1 overflow-hidden className="w-[calc(100%-20em-20em)]">
         <Editor />

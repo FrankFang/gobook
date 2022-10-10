@@ -20,7 +20,7 @@ func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	requestedFilename := strings.TrimPrefix(req.URL.Path, "/")
 	println("Requesting file:", requestedFilename)
 	wd, _ := os.Getwd()
-	p := filepath.Join(wd, "gobook_data", "images", requestedFilename)
+	p := filepath.Join(wd, "gobook_data", requestedFilename)
 	fileData, err := os.ReadFile(p)
 	if err != nil {
 		res.WriteHeader(http.StatusNotFound)

@@ -449,7 +449,7 @@ func (a *App) UploadImage(url string) (string, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	return filename, nil
+	return "images/" + filename, nil
 }
 
 func (a *App) RenderMarkdown(source string) (string, error) {

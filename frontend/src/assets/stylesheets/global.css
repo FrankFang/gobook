@@ -19,6 +19,7 @@ body {
 :focus {
   outline: none;
 }
-#app {
-}
 
+::-webkit-scrollbar {
+  display: none;
+}

@@ -6,7 +6,7 @@ import { immer } from 'zustand/middleware/immer'
 import { main } from '../../wailsjs/go/models'
 import { DeleteChapter, GetBookWithChapters, InsertChapterAfter, MoveChapter, UpdateChapter } from '../../wailsjs/go/main/App'
 
-type Node = Omit<Chapter, 'convertValues'> & { children: Node[] }
+type Node = Omit<Chapter, 'convertValues'> & { children: Node[]; level: number }
 type Tree = Node[]
 
 const moveTypeMap = {
@@ -155,12 +155,16 @@ function generateChapterTree(chapters: Chapter[]): Tree {
   const clone: typeof chapters = JSON.parse(JSON.stringify(chapters))
   for (let i = 0; clone[i]; i++) {
     const chapter = clone[i]
-    const node: Node = { children: [], ...chapter }
+    const node: Node = { children: [], level: 1, ...chapter }
     if (node.parent_id) {
       if (!parentIdList.includes(node.parent_id)) { continue }
       const parent = findNodeById(tree, node.parent_id)
-      if (parent) { insertNode(parent.children, node) }
-      else { clone.push(chapter) }
+      if (parent) {
+        insertNode(parent.children, node)
+        node.level = parent.level + 1
+      } else {
+        clone.push(chapter)
+      }
     } else {
       insertNode(tree, node)
     }

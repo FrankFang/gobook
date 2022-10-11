@@ -51,7 +51,7 @@ export const ChapterListItem: React.FC<ChapterListItemProps> = props => {
         }</span>
         <input
           ref={inputRef} lh-24px py-8px text-18px
-          value={ value} shrink-1
+          value={ value} shrink-1 bg-transparent
           onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => onKeyDown?.(e, id)}
           onInput={(e: ChangeEvent<HTMLInputElement>) => onInput(e, id)}
           onFocus={(e: FocusEvent<HTMLInputElement>) => onFocus?.(e, id)}

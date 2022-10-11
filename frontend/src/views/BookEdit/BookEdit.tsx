@@ -21,7 +21,8 @@ export const BookEdit: React.FC = () => {
   const { bookId } = useParams<{ bookId: string; chapterId: string }>()
   const {
     book, chapters, updateLocalChapter, fetchBook, updateRemoteChapter, appendChapter,
-    findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, tree, flatTree, moveChapter, deleteChapter
+    findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, tree, flatTree, moveChapter, deleteChapter,
+    findSelfInTree
   } = useBook()
   useEffect(() => {
     console.log('chapters: ', chapters)
@@ -37,7 +38,6 @@ export const BookEdit: React.FC = () => {
       return {
         Enter: async (e, id) => {
           const newChapter = await appendChapter(id, { name: '', content: '' })
-          console.log('newChapter: ', newChapter)
           setFocused(newChapter.id)
         },
         Backspace: async (e, id) => {
@@ -58,6 +58,9 @@ export const BookEdit: React.FC = () => {
               moveChapter('insertAfter', id, father.id)
             }
           } else {
+            const node = findSelfInTree(id, tree)
+            if (!node) { return }
+            if (node.level >= 3) { return }
             const brother = findOlderBrotherInTree(id, tree)
             if (brother) {
               moveChapter('append', id, brother.id)

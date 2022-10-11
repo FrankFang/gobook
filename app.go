@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -22,6 +23,11 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 	"golang.org/x/exp/slices"
 )
+
+type BookWithChapters struct {
+	Book
+	Chapters []Chapter `json:"chapters"`
+}
 
 func init() {
 	wd, err := os.Getwd()
@@ -152,11 +158,6 @@ func (a *App) GetBook(id int64) (Book, error) {
 		log.Fatalln(err)
 	}
 	return b, nil
-}
-
-type BookWithChapters struct {
-	Book
-	Chapters []Chapter `json:"chapters"`
 }
 
 func (a *App) GetBookWithChapters(id int64) (bwc BookWithChapters, err error) {
@@ -514,12 +515,6 @@ func (a *App) SelectCover() (string, error) {
 	return "covers/" + filename, nil
 }
 
-type PublishBookParams struct {
-	format  []string
-	summary string
-	cover   string
-}
-
 type ChapterTreeNode struct {
 	Chapter
 	Children []*ChapterTreeNode `json:"children"`
@@ -540,8 +535,8 @@ func findNodeByID(id int64, nodes []*ChapterTreeNode) *ChapterTreeNode {
 	return nil
 }
 
-func chapters2Trees(chapters []Chapter) []ChapterTreeNode {
-	tree := make([]ChapterTreeNode, 0, len(chapters))
+func chapters2Trees(chapters []Chapter) []*ChapterTreeNode {
+	trees := make([]*ChapterTreeNode, 0, len(chapters))
 	nodeCache := make(map[int64]*ChapterTreeNode)
 	futureChildren := make(map[int64][]*ChapterTreeNode)
 	clone := slices.Clone(chapters)
@@ -551,6 +546,9 @@ func chapters2Trees(chapters []Chapter) []ChapterTreeNode {
 			Children: make([]*ChapterTreeNode, 0),
 		}
 		nodeCache[node.ID] = &node
+		if node.ParentID == nil || *node.ParentID == 0 {
+			trees = append(trees, &node)
+		}
 		parent, has := nodeCache[*node.ParentID]
 		if has {
 			parent.Children = append(parent.Children, &node)
@@ -563,18 +561,38 @@ func chapters2Trees(chapters []Chapter) []ChapterTreeNode {
 			node.Children = append(node.Children, children...)
 		}
 	}
-	return tree
+	return trees
 }
 
-func (a *App) PublishBook(bookId int64, params PublishBookParams) error {
+func sortTrees(trees []*ChapterTreeNode) []*ChapterTreeNode {
+	sort.Slice(trees, func(i, j int) bool {
+		return *trees[i].Sequence < *trees[j].Sequence
+	})
+	for i := range trees {
+		trees[i].Children = sortTrees(trees[i].Children)
+	}
+	return trees
+}
+
+func traverseTrees(trees []*ChapterTreeNode, parents []int, fn func(node *ChapterTreeNode, index int, parents []int)) {
+	for i := range trees {
+		fn(trees[i], i, parents)
+		if len(trees[i].Children) > 0 {
+			newParents := append(parents, i)
+			traverseTrees(trees[i].Children, newParents, fn)
+		}
+	}
+}
+
+func (a *App) PublishBook(bookId int64, format []string, summary, cover string) error {
 	q, _, err := createQuery("books.db")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	book, err := q.UpdateBook(ctx, UpdateBookParams{
 		ID:      bookId,
-		Summary: &params.summary,
-		Cover:   &params.cover,
+		Summary: &summary,
+		Cover:   &cover,
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -584,26 +602,43 @@ func (a *App) PublishBook(bookId int64, params PublishBookParams) error {
 		log.Fatalln(err)
 	}
 	p, _ := os.Getwd()
-	dir := filepath.Join(p, "gobook_data", "books", fmt.Sprintf("%d", bookId))
-	err = os.MkdirAll(dir, 0755)
+	bookDir := filepath.Join(p, "gobook_data", "books", *book.Name)
+	err = os.MkdirAll(bookDir, 0755)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// 如果 params.format 中包含 markdown，则生成 markdown
-	if slices.Contains(params.format, "markdown") {
+	if slices.Contains(format, "markdown") {
 		// 首先用 book 信息创建 index.md
 		sb := strings.Builder{}
 		sb.WriteString(fmt.Sprintf("# %s \n", *book.Name))
 		sb.WriteString(*book.Summary + "\n")
 		sb.WriteString("![封面](" + *book.Cover + ") \n")
 		trees := chapters2Trees(chapters)
+		sortTrees(trees)
 		for _, tree := range trees {
 			sb.WriteString(fmt.Sprintf("## %s\n", *tree.Name))
 		}
-		err = os.WriteFile(filepath.Join(dir, "index.md"), []byte(sb.String()), 0644)
+		err = os.WriteFile(filepath.Join(bookDir, "index.md"), []byte(sb.String()), 0644)
 		if err != nil {
 			return err
 		}
+		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, i int, parents []int) {
+			chaptersDir := filepath.Join(bookDir, "chapters")
+			err := os.MkdirAll(chaptersDir, 0755)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			prefix := fmt.Sprintf("%d", i+1)
+			for _, parent := range parents {
+				prefix = fmt.Sprintf("%d-%s", parent+1, prefix)
+			}
+			p := filepath.Join(chaptersDir, fmt.Sprintf("%s_%s.md", prefix, *node.Name))
+			err = os.WriteFile(p, []byte(*node.Content), 0644)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		})
 	}
 	return nil
 

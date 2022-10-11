@@ -20,7 +20,9 @@ export default defineConfig({
     'layout-main': 'grow-1 bg-gray-250',
     'x-input': 'h-40px w-20em b-rounded-1 pl-2 pr-2',
     'x-form': 'flex flex-col',
-    'x-form-label': 'h-40px lh-40px flex gap-x-1em'
+    'x-form-label': 'h-40px lh-40px flex gap-x-1em',
+    'input-error': 'text-red-500 b-1 b-red-500',
+    'text-error': 'text-red-500',
   },
   safelist: 'grow-0 grow-1 shrink-0 shrink-1'.split(' '),
   presets: [

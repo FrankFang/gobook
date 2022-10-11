@@ -14,7 +14,7 @@ export const Layout: React.FC<Props> = ({ panels, main }) => {
       <aside layout-aside>
         <ol layout-panels>
           <li layout-panel>
-            <Link to="/" m-4><Button color="white" size="small">返回首页</Button></Link>
+            <Link to="/" m-4><Button color="white" size="small">返回</Button></Link>
           </li>
           {panels}
         </ol>

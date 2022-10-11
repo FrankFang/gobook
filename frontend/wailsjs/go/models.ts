@@ -165,7 +165,6 @@ export namespace main {
 		    return a;
 		}
 	}
-	
 	export class UpdateChapterParams {
 	    name?: string;
 	    sequence?: number;

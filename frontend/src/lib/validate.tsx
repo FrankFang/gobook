@@ -55,14 +55,16 @@ function isEmpty(value: null | undefined | string | number | FData) {
   return value === null || value === undefined || value === ''
 }
 
-type X = {
+type ErrorsLike = {
   [k in string]?: string[];
 }
-export function hasError(errors: X) {
+export function hasError(errors: ErrorsLike | string[] | undefined): boolean {
+  if (errors === undefined) { return false }
+  if (Array.isArray(errors)) { return errors.length > 0 }
   return (
     Object.values(errors).reduce(
       (result, value) => result + (value ? value.length : 0),
-      0,
+      0
     ) > 0
   )
 }

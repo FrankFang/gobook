@@ -99,7 +99,7 @@ export const BookEdit: React.FC = () => {
   return book
     ? <Layout main={<Outlet />} panels={
       <>
-        <li layout-panel grow-1>
+        <li layout-panel grow-1 shrink-1>
           <h2 layout-panel-header font-bold>撰写</h2>
           <div grow-1 overflow-auto h-full shadow shadow-inset>
             <ChapterList chapters={chapters} focused={focused}

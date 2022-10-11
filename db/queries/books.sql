@@ -25,6 +25,7 @@ WHERE id = ? AND deleted_at IS NULL;
 -- name: UpdateBook :one
 UPDATE books
 SET name = coalesce(@name, name),
-    summary = coalesce(@summary, summary)
+    summary = coalesce(@summary, summary),
+    cover = coalesce(@cover, cover)
 WHERE id = ?
 RETURNING *;

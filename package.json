@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@unocss/preset-typography": "^0.45.29"
+  }
+}

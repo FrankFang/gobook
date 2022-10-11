@@ -13,6 +13,7 @@ type Book struct {
 	Name      *string    `json:"name"`
 	Author    *string    `json:"author"`
 	Summary   *string    `json:"summary"`
+	Cover     *string    `json:"cover"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`

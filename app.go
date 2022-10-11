@@ -15,10 +15,12 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/vincent-petithory/dataurl"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
@@ -113,7 +115,7 @@ func (a *App) CreateBook(name *string) (Book, error) {
 	if _, err = a.CreateChapter(CreateChapterParams{
 		BookID:  &b.ID,
 		Name:    Ptr("第一章"),
-		Content: Ptr("请开始你的创作"),
+		Content: Ptr(""),
 	}); err != nil {
 		log.Fatalln(err)
 	}
@@ -233,6 +235,9 @@ func (a *App) CreateChapter(c CreateChapterParams) (Chapter, error) {
 		}
 		max := getFloat(r, 0)
 		c.Sequence = Ptr(max + sequenceStep)
+	}
+	if c.ParentID == nil {
+		c.ParentID = new(int64)
 	}
 	if l := getDecimalLength(*c.Sequence); l > 5 {
 		// TODO 对 sequence 进行重排
@@ -452,7 +457,7 @@ func (a *App) UploadImage(url string) (string, error) {
 	return "images/" + filename, nil
 }
 
-func (a *App) RenderMarkdown(source string) (string, error) {
+func newMd() goldmark.Markdown {
 	md := goldmark.New(
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
@@ -463,6 +468,11 @@ func (a *App) RenderMarkdown(source string) (string, error) {
 			html.WithXHTML(),
 		),
 	)
+	return md
+}
+
+func (a *App) RenderMarkdown(source string) (string, error) {
+	md := newMd()
 	ctx := parser.NewContext(parser.WithIDs(&myIDs{}))
 	// 把 source 转为 []byte
 	var buf bytes.Buffer
@@ -470,6 +480,152 @@ func (a *App) RenderMarkdown(source string) (string, error) {
 		log.Fatalln(err)
 	}
 	return buf.String(), nil
+}
+
+func (a *App) SelectCover() (string, error) {
+	cover, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "选择封面",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "图片", Pattern: "*.png;*.jpg;*.jpeg;"},
+		},
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if cover == "" {
+		return "", errors.New("no cover selected")
+	}
+	ext := filepath.Ext(cover)
+	bytes, err := os.ReadFile(cover)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	p, _ := os.Getwd()
+	dir := filepath.Join(p, "gobook_data", "covers")
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	filename := uuid.NewString() + ext
+	err = os.WriteFile(filepath.Join(dir, filename), bytes, 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return "covers/" + filename, nil
+}
+
+type PublishBookParams struct {
+	format  []string
+	summary string
+	cover   string
+}
+
+type ChapterTreeNode struct {
+	Chapter
+	Children []*ChapterTreeNode `json:"children"`
+}
+
+func findNodeByID(id int64, nodes []*ChapterTreeNode) *ChapterTreeNode {
+	for i := range nodes {
+		if nodes[i].ID == id {
+			return nodes[i]
+		}
+		if len(nodes[i].Children) > 0 {
+			node := findNodeByID(id, nodes[i].Children)
+			if node != nil {
+				return node
+			}
+		}
+	}
+	return nil
+}
+
+func chapters2Trees(chapters []Chapter) []ChapterTreeNode {
+	tree := make([]ChapterTreeNode, 0, len(chapters))
+	nodeCache := make(map[int64]*ChapterTreeNode)
+	futureChildren := make(map[int64][]*ChapterTreeNode)
+	clone := slices.Clone(chapters)
+	for chapter := range clone {
+		node := ChapterTreeNode{
+			Chapter:  chapters[chapter],
+			Children: make([]*ChapterTreeNode, 0),
+		}
+		nodeCache[node.ID] = &node
+		parent, has := nodeCache[*node.ParentID]
+		if has {
+			parent.Children = append(parent.Children, &node)
+		} else {
+			futureChildren[*node.ParentID] = append(futureChildren[*node.ParentID], &node)
+		}
+
+		children, has := futureChildren[node.ID]
+		if has {
+			node.Children = append(node.Children, children...)
+		}
+	}
+	return tree
+}
+
+func (a *App) PublishBook(bookId int64, params PublishBookParams) error {
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	book, err := q.UpdateBook(ctx, UpdateBookParams{
+		ID:      bookId,
+		Summary: &params.summary,
+		Cover:   &params.cover,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	chapters, err := q.ListChapters(ctx, &bookId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	p, _ := os.Getwd()
+	dir := filepath.Join(p, "gobook_data", "books", fmt.Sprintf("%d", bookId))
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// 如果 params.format 中包含 markdown，则生成 markdown
+	if slices.Contains(params.format, "markdown") {
+		// 首先用 book 信息创建 index.md
+		sb := strings.Builder{}
+		sb.WriteString(fmt.Sprintf("# %s \n", *book.Name))
+		sb.WriteString(*book.Summary + "\n")
+		sb.WriteString("![封面](" + *book.Cover + ") \n")
+		trees := chapters2Trees(chapters)
+		for _, tree := range trees {
+			sb.WriteString(fmt.Sprintf("## %s\n", *tree.Name))
+		}
+		err = os.WriteFile(filepath.Join(dir, "index.md"), []byte(sb.String()), 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
+	// // 生成 markdown
+	// md := newMd()
+	// ctx := parser.NewContext(parser.WithIDs(&myIDs{}))
+	// var buf bytes.Buffer
+	// for _, chapter := range chapters {
+	// 	if err := md.Convert([]byte(chapter.Content), &buf, parser.WithContext(ctx)); err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// }
+	// // 生成 epub
+	// epub := epub.NewEpub(book.Title)
+	// epub.SetAuthor(book.Author)
+	// epub.SetDescription(book.Summary)
+	// epub.SetLanguage("zh")
+	// epub.AddSection(buf.String(), book.Title, "", "")
+	// epub.AddCover(params.cover)
+	// epub.Write("book.epub")
+	return nil
+
 }
 
 // helpers

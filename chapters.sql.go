@@ -226,7 +226,7 @@ SELECT id, name, book_id, parent_id, sequence, content, created_at, updated_at, 
 WHERE book_id = ?
 AND parent_id = ?
 AND deleted_at IS NULL
-ORDER BY id
+ORDER BY sequence
 `
 
 type ListChaptersWithParentIDParams struct {

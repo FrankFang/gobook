@@ -50,8 +50,16 @@ export function MoveChapter(arg1, arg2, arg3) {
   return window['go']['main']['App']['MoveChapter'](arg1, arg2, arg3);
 }
 
+export function PublishBook(arg1, arg2) {
+  return window['go']['main']['App']['PublishBook'](arg1, arg2);
+}
+
 export function RenderMarkdown(arg1) {
   return window['go']['main']['App']['RenderMarkdown'](arg1);
+}
+
+export function SelectCover() {
+  return window['go']['main']['App']['SelectCover']();
 }
 
 export function UpdateChapter(arg1) {

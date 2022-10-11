@@ -31,17 +31,15 @@ export const BookForm: React.FC = () => {
       <header border-b-1 b-gray-200 pb-2>
         <h3 text-2xl>开始新的创作</h3>
       </header>
-      <form flex flex-col mt-4 onSubmit={onSubmit}>
-        <div>
-          <label block>
-            <div h-40px lh-40px flex gap-x-1em>
-              书名
-              <Error value={errors.name} />
-            </div>
-            <input type="text" h-40px w-20em b-rounded-1 pl-2 pr-2 value={bookForm.name}
-              onChange={e => setBookForm({ name: e.target.value })} />
-          </label>
-        </div>
+      <form x-form onSubmit={onSubmit}>
+        <label block>
+          <div x-form-label>
+            书名
+            <Error value={errors.name} />
+          </div>
+          <input type="text" x-input value={bookForm.name}
+            onChange={e => setBookForm({ name: e.target.value })} />
+        </label>
         <div mt-4>
           <Button disabled={listingBooks} type="submit">开始创作</Button>
         </div>

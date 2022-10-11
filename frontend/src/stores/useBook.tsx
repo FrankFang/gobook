@@ -150,20 +150,24 @@ function flattenTree(tree: Tree) {
   return result
 }
 function generateChapterTree(chapters: Chapter[]): Tree {
-  const tree: Tree = []
-  for (const chapter of chapters) {
-    const copy = JSON.parse(JSON.stringify(chapter))
-    const node: Node = { ...copy, children: [], parent: null }
-    if (copy.parent_id) {
-      const parent = findNodeById(tree, copy.parent_id)
-      if (parent) { insertNode(parent.children, node, parent) }
+  const tree: Node[] = []
+  const parentIdList = chapters.map(c => c.parent_id)
+  const clone: typeof chapters = JSON.parse(JSON.stringify(chapters))
+  for (let i = 0; clone[i]; i++) {
+    const chapter = clone[i]
+    const node: Node = { children: [], ...chapter }
+    if (node.parent_id) {
+      if (!parentIdList.includes(node.parent_id)) { continue }
+      const parent = findNodeById(tree, node.parent_id)
+      if (parent) { insertNode(parent.children, node) }
+      else { clone.push(chapter) }
     } else {
       insertNode(tree, node)
     }
   }
   return tree
 }
-function insertNode(array: Node[], node: Node, parent?: Node) {
+function insertNode(array: Node[], node: Node) {
   const index = array.findIndex(c => c.sequence! > node.sequence!)
   const insertPosition = index >= 0 ? index : array.length
   array.splice(insertPosition, 0, node)

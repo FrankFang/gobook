@@ -57,7 +57,8 @@ export const Editor: React.FC = () => {
   return (
     chapter
       ? <div flex flex-col>
-          <textarea text-lg h-screen grow-1 bg-gray-250 p-2 resize-none
+          <textarea text-lg h-screen grow-1 bg-gray-250 p-4 resize-none
+            placeholder="请在这里输入文字"
             value={chapter.content} onChange={onChange}
             onPaste={onPaste}
             />

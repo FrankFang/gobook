@@ -1,14 +1,11 @@
 import * as React from 'react'
-import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useNavigate, useParams } from 'react-router-dom'
-import logo from '../../assets/icons/logo.svg'
 import { useBook } from '../../stores/useBook'
 import 'github-markdown-css'
 
 import type { main } from '../../../wailsjs/go/models'
-import { Button } from '../../components/Button'
-import s from './BookEdit.module.scss'
+import { Layout } from '../../components/Layout'
 import { ChapterList } from './ChapterList'
 
 type Chapter = main.Chapter
@@ -27,6 +24,9 @@ export const BookEdit: React.FC = () => {
     findOlderBrotherInTree, findYoungerBrotherInTree, findFatherInTree, tree, flatTree, moveChapter, deleteChapter
   } = useBook()
   useEffect(() => {
+    console.log('chapters: ', chapters)
+  }, [chapters])
+  useEffect(() => {
     if (bookId === undefined) { return }
     fetchBook(parseInt(bookId))
   }, [bookId])
@@ -37,6 +37,7 @@ export const BookEdit: React.FC = () => {
       return {
         Enter: async (e, id) => {
           const newChapter = await appendChapter(id, { name: '', content: '' })
+          console.log('newChapter: ', newChapter)
           setFocused(newChapter.id)
         },
         Backspace: async (e, id) => {
@@ -95,78 +96,34 @@ export const BookEdit: React.FC = () => {
     }, [tree, flatTree])
   const nav = useNavigate()
 
-  const Wrapper: React.FC< { children: ReactNode } > = useMemo(() =>
-    ({ children }) => <div h-screen flex flex-nowrap>{children}</div>
-  , [])
-  const Aside: React.FC< { children: ReactNode } > = useMemo(() =>
-    ({ children }) => <div w-20em h-screen shrink-0 flex flex-col>{children}</div>
-  , [])
-  const Footer: React.FC = useMemo(() =>
-    () => (
-      <div p-16px shrink-0 flex items-center gap-x-2>
-        <img src={logo} h-8 shrink-0 /> <span text-3xl>GoBook</span>
-      </div>
-    ), [])
-  const Main: React.FC<{ children: ReactNode }> = useMemo(() =>
-    ({ children }) => <main grow-1 >{children}</main>
-  , [])
-
-  const Panel: React.FC<{ children: ReactNode; active?: boolean }>
-  = useMemo(() => ({ children, active = false }) =>
-    active
-      ? <li overflow-hidden grow-1 flex flex-col shrink-1>{children}</li>
-      : <li overflow-hidden grow-0 flex flex-col shrink-0>{children}</li>
-  , [])
-  const Header: React.FC<{ children: ReactNode }> = useMemo(() => ({ children }) => (
-  <div lh-24px py-12px bg-gray-250 text-20px px-16px shrink-0>
-    {children}
-  </div>
-  ), [])
-  const Panels: React.FC<{ children: ReactNode }> = useMemo(() => ({ children }) => (
-  <ol grow-1 flex flex-col justify-start overflow-hidden className={s.menu}>
-    {children}
-  </ol>
-  ), [s.menu])
-
   return book
-    ? (
-      <Wrapper>
-        <Aside>
-          <Panels>
-            <Panel>
-              <div p-16px>
-                <Link to="/"><Button color="white" size="small">返回首页</Button></Link>
-              </div>)
-            </Panel>
-            <Panel active>
-              <Header>撰写</Header>
-              <div grow-1 overflow-auto h-full shadow shadow-inset>
-                <ChapterList chapters={chapters} focused={focused}
-                  onInput={(e, id) => {
-                    updateLocalChapter(id, { name: e.target.value })
-                  }}
-                  onKeyDown={(e, id) => {
-                    map[e.key]?.(e, id)
-                  }}
-                  onFocus={(e, id) => {
-                    nav(`/books/${book.id}/edit/chapters/${id}/edit`)
-                    setFocused(id)
-                  }}
-                  onDebouncedChange={(id, name) => updateRemoteChapter(id, { name })}
-                />
-              </div>
-            </Panel>
-            <Panel>
-              <Link to={`/books/${bookId}/publish`}><Header>发布</Header></Link>
-            </Panel>
-          </Panels>
-          <Footer/>
-        </Aside>
-        <Main>
-          <Outlet />
-        </Main>
-      </Wrapper>
-      )
+    ? <Layout main={<Outlet />} panels={
+      <>
+        <li layout-panel grow-1>
+          <h2 layout-panel-header font-bold>撰写</h2>
+          <div grow-1 overflow-auto h-full shadow shadow-inset>
+            <ChapterList chapters={chapters} focused={focused}
+              onInput={(e, id) => {
+                updateLocalChapter(id, { name: e.target.value })
+              }}
+              onKeyDown={(e, id) => {
+                map[e.key]?.(e, id)
+              }}
+              onFocus={(e, id) => {
+                nav(`/books/${book.id}/edit/chapters/${id}/edit`)
+                setFocused(id)
+              }}
+              onDebouncedChange={(id, name) => updateRemoteChapter(id, { name })}
+            />
+          </div>
+        </li>
+        <li layout-panel>
+          <Link to={`/books/${bookId}/publish`}>
+            <h2 layout-panel-header>发布</h2>
+          </Link>
+        </li>
+      </>
+    } />
     : <div>加载中……</div>
 }
 

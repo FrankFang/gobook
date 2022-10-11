@@ -5,8 +5,7 @@ declare module "react" {
     block?: boolean;
     relative?: boolean;
     absolute?: boolean;
+    bold?: boolean;
   }
 }
 
-declare global {
-}

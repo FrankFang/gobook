@@ -31,8 +31,8 @@ export const ChapterEdit: React.FC = () => {
     if (breakpoint[2] === '>' && x > breakpoint[0]) { return }
     const [dx, dy] = [x - dragFrom[0], y - dragFrom[1]]
     const width = wrapper.current!.clientWidth
-    const newSize = Math.max(Math.min(size - dx, width * 0.7), 200)
-    if (newSize >= width * 0.7) {
+    const newSize = Math.max(Math.min(size - dx, width * 0.6), 200)
+    if (newSize >= width * 0.6) {
       setBreakpoint([x, y, '<'])
     } else if (newSize <= 200) {
       setBreakpoint([x, y, '>'])
@@ -61,7 +61,7 @@ export const ChapterEdit: React.FC = () => {
           onMouseDown={onDragStart} cursor-e-resize
         />
         <div h-full overflow-auto>
-          <div p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }} />
+          <div min-h-full p-45px className="markdown-body" dangerouslySetInnerHTML={{ __html: preview }} />
         </div>
       </div>
     </div>

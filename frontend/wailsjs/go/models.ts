@@ -1,30 +1,11 @@
 export namespace main {
 	
-	export class UpdateChapterParams {
-	    name?: string;
-	    sequence?: number;
-	    content?: string;
-	    parent_id?: number;
-	    id: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateChapterParams(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.sequence = source["sequence"];
-	        this.content = source["content"];
-	        this.parent_id = source["parent_id"];
-	        this.id = source["id"];
-	    }
-	}
 	export class Book {
 	    id: number;
 	    name?: string;
 	    author?: string;
 	    summary?: string;
+	    cover?: string;
 	    // Go type: time.Time
 	    created_at: any;
 	    // Go type: time.Time
@@ -42,6 +23,7 @@ export namespace main {
 	        this.name = source["name"];
 	        this.author = source["author"];
 	        this.summary = source["summary"];
+	        this.cover = source["cover"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
 	        this.deleted_at = this.convertValues(source["deleted_at"], null);
@@ -139,6 +121,7 @@ export namespace main {
 	    name?: string;
 	    author?: string;
 	    summary?: string;
+	    cover?: string;
 	    // Go type: time.Time
 	    created_at: any;
 	    // Go type: time.Time
@@ -157,6 +140,7 @@ export namespace main {
 	        this.name = source["name"];
 	        this.author = source["author"];
 	        this.summary = source["summary"];
+	        this.cover = source["cover"];
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.updated_at = this.convertValues(source["updated_at"], null);
 	        this.deleted_at = this.convertValues(source["deleted_at"], null);
@@ -180,6 +164,27 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	
+	export class UpdateChapterParams {
+	    name?: string;
+	    sequence?: number;
+	    content?: string;
+	    parent_id?: number;
+	    id: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateChapterParams(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.sequence = source["sequence"];
+	        this.content = source["content"];
+	        this.parent_id = source["parent_id"];
+	        this.id = source["id"];
+	    }
 	}
 
 }

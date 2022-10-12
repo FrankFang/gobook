@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	epub "github.com/bmaupin/go-epub"
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	cp "github.com/otiai10/copy"
@@ -639,7 +640,7 @@ func generatePrefix(i int, parents []int) string {
 	}
 	return prefix
 }
-func (a *App) PublishBook(bookId int64, format []string, summary, cover string) error {
+func (a *App) PublishBook(bookId int64, format []string, author, summary, cover string) error {
 	q, _, err := createQuery("books.db")
 	if err != nil {
 		log.Fatalln(err)
@@ -648,6 +649,7 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		ID:      bookId,
 		Summary: &summary,
 		Cover:   &cover,
+		Author:  &author,
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -732,27 +734,24 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		}
 		open.Start(outputDir)
 	}
-	return nil
+	if slices.Contains(format, "epub") {
+		e := epub.NewEpub(*book.Name)
+		// Set the author
+		e.SetAuthor("中文")
 
-	// // 生成 markdown
-	// md := newMd()
-	// ctx := parser.NewContext(parser.WithIDs(&myIDs{}))
-	// var buf bytes.Buffer
-	// for _, chapter := range chapters {
-	// 	if err := md.Convert([]byte(chapter.Content), &buf, parser.WithContext(ctx)); err != nil {
-	// 		log.Fatalln(err)
-	// 	}
-	// }
-	// // 生成 epub
-	// epub := epub.NewEpub(book.Title)
-	// epub.SetAuthor(book.Author)
-	// epub.SetDescription(book.Summary)
-	// epub.SetLanguage("zh")
-	// epub.AddSection(buf.String(), book.Title, "", "")
-	// epub.AddCover(params.cover)
-	// epub.Write("book.epub")
-	return nil
+		// Add a section
+		section1Body := `<h1>中文</h1>
+<p>段落</p>`
+		e.AddSection(section1Body, "第一章", "", "")
 
+		p := filepath.Join(outputDir, *book.Name+".epub")
+		// Write the EPUB
+		err = e.Write(p)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	return nil
 }
 
 // helpers

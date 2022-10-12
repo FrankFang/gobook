@@ -50,8 +50,8 @@ export function MoveChapter(arg1, arg2, arg3) {
   return window['go']['main']['App']['MoveChapter'](arg1, arg2, arg3);
 }
 
-export function PublishBook(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['PublishBook'](arg1, arg2, arg3, arg4);
+export function PublishBook(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['PublishBook'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function RenderMarkdown(arg1) {

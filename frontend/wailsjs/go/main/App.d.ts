@@ -26,7 +26,7 @@ export function ListChapters(arg1:number):Promise<Array<main.Chapter>>;
 
 export function MoveChapter(arg1:number,arg2:number,arg3:number):Promise<main.Chapter>;
 
-export function PublishBook(arg1:number,arg2:Array<string>,arg3:string,arg4:string):Promise<Error>;
+export function PublishBook(arg1:number,arg2:Array<string>,arg3:string,arg4:string,arg5:string):Promise<Error>;
 
 export function RenderMarkdown(arg1:string):Promise<string>;
 

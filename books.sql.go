@@ -109,7 +109,8 @@ const updateBook = `-- name: UpdateBook :one
 UPDATE books
 SET name = coalesce(@name, name),
     summary = coalesce(@summary, summary),
-    cover = coalesce(@cover, cover)
+    cover = coalesce(@cover, cover),
+    author = coalesce(@author, author)
 WHERE id = ?
 RETURNING id, name, author, summary, cover, created_at, updated_at, deleted_at
 `
@@ -118,6 +119,7 @@ type UpdateBookParams struct {
 	Name    *string `json:"name"`
 	Summary *string `json:"summary"`
 	Cover   *string `json:"cover"`
+	Author  *string `json:"author"`
 	ID      int64   `json:"id"`
 }
 
@@ -126,6 +128,7 @@ func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) (Book, e
 		arg.Name,
 		arg.Summary,
 		arg.Cover,
+		arg.Author,
 		arg.ID,
 	)
 	var i Book

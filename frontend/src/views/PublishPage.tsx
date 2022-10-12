@@ -15,6 +15,7 @@ type FData = {
   format: ('markdown' | 'epub' | 'web')[]
   summary: string
   cover: string
+  author: string
 }
 const tryIt = <T extends (...args: any[]) => any>(fn: T): ReturnType<T> | undefined => {
   try {
@@ -39,8 +40,8 @@ export const PublishPage: React.FC = () => {
     ])
     setErrors(errors)
     if (hasError(errors)) { return }
-    const { format, summary, cover } = formData
-    await PublishBook(parseInt(bookId!), format, summary, cover)
+    const { format, summary, cover, author } = formData
+    await PublishBook(parseInt(bookId!), format, author, summary, cover)
     window.alert('导出成功')
   }
   const [formData, setFormData] = useState<FData>(() => {
@@ -48,7 +49,7 @@ export const PublishPage: React.FC = () => {
       JSON.parse(localStorage.getItem('publishFormat') ?? '[]') as unknown as FData['format']
     )
     return {
-      format: format ?? [], summary: '', cover: ''
+      format: format ?? [], summary: '', cover: '', author: ''
     }
   })
   useEffect(() => {
@@ -56,7 +57,8 @@ export const PublishPage: React.FC = () => {
     setFormData({
       ...formData,
       summary: book.summary ?? '',
-      cover: book.cover ?? ''
+      cover: book.cover ?? '',
+      author: book.author ?? '',
     })
   }, [book])
   const [errors, setErrors] = useState<ErrorsOf<FData>>({
@@ -64,14 +66,14 @@ export const PublishPage: React.FC = () => {
   })
   const onChange = (key: string, e: ChangeEvent) => {
     if (key === 'format') {
-      const { value, checked } = e.target as HTMLInputElement
-      const formatValue = value as unknown as ('markdown' | 'epub' | 'web')
-      const format = checked ? [...formData.format, formatValue] : formData.format.filter(f => f !== formatValue)
-      localStorage.setItem('publishFormat', JSON.stringify(format))
-      setFormData({ ...formData, format })
-    } else if (key === 'summary') {
+      const { value: inputValue, checked } = e.target as HTMLInputElement
+      const formatValue = inputValue as unknown as ('markdown' | 'epub' | 'web')
+      const value = checked ? [...formData.format, formatValue] : formData.format.filter(f => f !== formatValue)
+      localStorage.setItem('publishFormat', JSON.stringify(value))
+      setFormData({ ...formData, [key]: value })
+    } else {
       const { value } = (e.target as HTMLTextAreaElement)
-      setFormData({ ...formData, summary: value })
+      setFormData({ ...formData, [key]: value })
     }
   }
   const onSelectFile = async () => {
@@ -83,6 +85,14 @@ export const PublishPage: React.FC = () => {
     main={
       <div p-8>
         <form x-form onSubmit={onSubmit}>
+          <div>
+            <div x-form-label>
+              作者 <Error value={errors.author} />
+            </div>
+            <div>
+              <input x-input value={formData.author} onChange={ e => onChange('author', e) } />
+            </div>
+          </div>
           <div>
             <div x-form-label>
               输出格式 <Error value={errors.format} />

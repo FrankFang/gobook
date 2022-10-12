@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	cp "github.com/otiai10/copy"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/vincent-petithory/dataurl"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/yuin/goldmark"
@@ -598,19 +599,43 @@ func sortTrees(trees []*ChapterTreeNode) []*ChapterTreeNode {
 	return trees
 }
 
-func traverseTrees(trees []*ChapterTreeNode, parents []int, fn func(node *ChapterTreeNode, index int, parents []int)) {
+type traverseCallbackParams struct {
+	current *ChapterTreeNode
+	index   int
+	parents []int
+	prev    *ChapterTreeNode
+	next    *ChapterTreeNode
+	parent  *ChapterTreeNode
+}
+
+func traverseTrees(trees []*ChapterTreeNode, parent *ChapterTreeNode, parents []int, fn func(params traverseCallbackParams)) {
 	for i := range trees {
-		fn(trees[i], i, parents)
+		var prev *ChapterTreeNode
+		if i > 0 {
+			prev = trees[i-1]
+		}
+		var next *ChapterTreeNode
+		if i < len(trees)-1 {
+			next = trees[i+1]
+		}
+		fn(traverseCallbackParams{
+			current: trees[i],
+			index:   i,
+			parents: parents,
+			prev:    prev,
+			next:    next,
+			parent:  parent,
+		})
 		if len(trees[i].Children) > 0 {
 			newParents := append(parents, i)
-			traverseTrees(trees[i].Children, newParents, fn)
+			traverseTrees(trees[i].Children, trees[i], newParents, fn)
 		}
 	}
 }
 func generatePrefix(i int, parents []int) string {
 	prefix := fmt.Sprintf("%d", i+1)
 	for _, parent := range parents {
-		prefix = fmt.Sprintf("%d-%s", parent+1, prefix)
+		prefix = fmt.Sprintf("%d.%s", parent+1, prefix)
 	}
 	return prefix
 }
@@ -653,24 +678,49 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		}
 		trees := chapters2Trees(chapters)
 		sortTrees(trees)
-		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, i int, parents []int) {
-			prefix := generatePrefix(i, parents)
-			sb.WriteString(strings.Repeat("    ", len(parents)) +
-				fmt.Sprintf("%d. [%s](./%s_%s.md)\n", i+1, *node.Name, prefix, *node.Name))
+		traverseTrees(trees, nil, []int{}, func(params traverseCallbackParams) {
+			prefix := generatePrefix(params.index, params.parents)
+			sb.WriteString(strings.Repeat("    ", len(params.parents)) +
+				fmt.Sprintf("%d. [%s](%s_%s.md)\n", params.index+1, *params.current.Name, prefix, *params.current.Name))
 		})
 		err = os.WriteFile(filepath.Join(outputDir, "0_index.md"), []byte(sb.String()), 0644)
 		if err != nil {
 			return err
 		}
-		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, i int, parents []int) {
+		traverseTrees(trees, nil, []int{}, func(params traverseCallbackParams) {
 			chaptersDir := outputDir
 			err := os.MkdirAll(chaptersDir, 0755)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			prefix := generatePrefix(i, parents)
-			p := filepath.Join(chaptersDir, fmt.Sprintf("%s_%s.md", prefix, *node.Name))
-			err = os.WriteFile(p, []byte(*node.Content), 0644)
+			prefix := generatePrefix(params.index, params.parents)
+			p := filepath.Join(chaptersDir, fmt.Sprintf("%s_%s.md", prefix, *params.current.Name))
+			sb := strings.Builder{}
+			sb.WriteString(*params.current.Content)
+			sb.WriteString("\n\n")
+			if params.parent != nil {
+				sb.WriteString(fmt.Sprintf("[返回](%s_%s.md)\n",
+					generatePrefix(
+						params.parents[len(params.parents)-1],
+						params.parents[:len(params.parents)-1],
+					),
+					*params.parent.Name),
+				)
+			}
+			if params.prev != nil && params.next == nil {
+				sb.WriteString(fmt.Sprintf("[上一页](%s_%s.md)\n",
+					generatePrefix(params.index-1, params.parents), *params.prev.Name))
+			}
+			if params.prev == nil && params.next != nil {
+				sb.WriteString(fmt.Sprintf("[下一页](%s_%s.md)\n",
+					generatePrefix(params.index+1, params.parents), *params.next.Name))
+			}
+			if params.prev != nil && params.next != nil {
+				sb.WriteString(fmt.Sprintf("[上一页](%s_%s.md) [下一页](%s_%s.md)\n",
+					generatePrefix(params.index-1, params.parents), *params.prev.Name,
+					generatePrefix(params.index+1, params.parents), *params.next.Name))
+			}
+			err = os.WriteFile(p, []byte(sb.String()), 0644)
 			if err != nil {
 				log.Fatalln(err)
 			}
@@ -680,7 +730,7 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		if err != nil {
 			log.Fatalln(err)
 		}
-
+		open.Start(outputDir)
 	}
 	return nil
 

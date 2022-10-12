@@ -16,7 +16,7 @@ export const Editor: React.FC = () => {
   useDebounce(() => {
     if (chapter === undefined) { return }
     updateRemoteChapter(chapter.id, { content: chapter.content })
-  }, 1000, [chapter, chapter?.content])
+  }, 200, [chapter, chapter?.content])
   const onPaste: ClipboardEventHandler<HTMLTextAreaElement> = e => {
     // 获取剪贴板中的图片
     const items = e.clipboardData?.items

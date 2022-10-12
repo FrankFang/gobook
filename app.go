@@ -607,7 +607,13 @@ func traverseTrees(trees []*ChapterTreeNode, parents []int, fn func(node *Chapte
 		}
 	}
 }
-
+func generatePrefix(i int, parents []int) string {
+	prefix := fmt.Sprintf("%d", i+1)
+	for _, parent := range parents {
+		prefix = fmt.Sprintf("%d-%s", parent+1, prefix)
+	}
+	return prefix
+}
 func (a *App) PublishBook(bookId int64, format []string, summary, cover string) error {
 	q, _, err := createQuery("books.db")
 	if err != nil {
@@ -647,8 +653,10 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		}
 		trees := chapters2Trees(chapters)
 		sortTrees(trees)
-		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, index int, parents []int) {
-			sb.WriteString(strings.Repeat("    ", len(parents)) + fmt.Sprintf("%d. %s\n", index+1, *node.Name))
+		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, i int, parents []int) {
+			prefix := generatePrefix(i, parents)
+			sb.WriteString(strings.Repeat("    ", len(parents)) +
+				fmt.Sprintf("%d. [%s](./%s_%s.md)\n", i+1, *node.Name, prefix, *node.Name))
 		})
 		err = os.WriteFile(filepath.Join(outputDir, "0_index.md"), []byte(sb.String()), 0644)
 		if err != nil {
@@ -660,10 +668,7 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 			if err != nil {
 				log.Fatalln(err)
 			}
-			prefix := fmt.Sprintf("%d", i+1)
-			for _, parent := range parents {
-				prefix = fmt.Sprintf("%d-%s", parent+1, prefix)
-			}
+			prefix := generatePrefix(i, parents)
 			p := filepath.Join(chaptersDir, fmt.Sprintf("%s_%s.md", prefix, *node.Name))
 			err = os.WriteFile(p, []byte(*node.Content), 0644)
 			if err != nil {

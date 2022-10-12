@@ -16,6 +16,13 @@ type FData = {
   summary: string
   cover: string
 }
+const tryIt = <T extends (...args: any[]) => any>(fn: T): ReturnType<T> | undefined => {
+  try {
+    return fn()
+  } catch (e) {
+    return undefined
+  }
+}
 export const PublishPage: React.FC = () => {
   const { bookId } = useParams<{ bookId: string }>()
   const { fetchBook, book } = useBook()
@@ -33,15 +40,19 @@ export const PublishPage: React.FC = () => {
     setErrors(errors)
     if (hasError(errors)) { return }
     const { format, summary, cover } = formData
-    const x = await PublishBook(parseInt(bookId!), format, summary, cover)
-    console.log(x)
+    await PublishBook(parseInt(bookId!), format, summary, cover)
+    window.alert('导出成功')
   }
-  const [formData, setFormData] = useState<FData>({
-    format: ['epub'], summary: '', cover: ''
+  const [formData, setFormData] = useState<FData>(() => {
+    const format = tryIt(() =>
+      JSON.parse(localStorage.getItem('publishFormat') ?? '[]') as unknown as FData['format']
+    )
+    return {
+      format: format ?? [], summary: '', cover: ''
+    }
   })
   useEffect(() => {
     if (!book) { return }
-    console.log('book: ', book)
     setFormData({
       ...formData,
       summary: book.summary ?? '',
@@ -55,11 +66,9 @@ export const PublishPage: React.FC = () => {
     if (key === 'format') {
       const { value, checked } = e.target as HTMLInputElement
       const formatValue = value as unknown as ('markdown' | 'epub' | 'web')
-      if (checked) {
-        setFormData({ ...formData, format: [...formData.format, formatValue] })
-      } else {
-        setFormData({ ...formData, format: formData.format.filter(f => f !== formatValue) })
-      }
+      const format = checked ? [...formData.format, formatValue] : formData.format.filter(f => f !== formatValue)
+      localStorage.setItem('publishFormat', JSON.stringify(format))
+      setFormData({ ...formData, format })
     } else if (key === 'summary') {
       const { value } = (e.target as HTMLTextAreaElement)
       setFormData({ ...formData, summary: value })

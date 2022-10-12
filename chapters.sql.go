@@ -101,9 +101,8 @@ func (q *Queries) CalcPrevSequence(ctx context.Context, arg CalcPrevSequencePara
 }
 
 const createChapter = `-- name: CreateChapter :one
-INSERT INTO chapters ( book_id, name, content, parent_id, sequence
-) VALUES ( ?, ?, ?, ?, ?
-)
+INSERT INTO chapters ( book_id, name, content, parent_id, sequence)
+VALUES ( ?, ?, ?, ?, ?)
 RETURNING id, name, book_id, parent_id, sequence, content, created_at, updated_at, deleted_at
 `
 

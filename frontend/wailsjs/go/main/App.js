@@ -58,14 +58,14 @@ export function RenderMarkdown(arg1) {
   return window['go']['main']['App']['RenderMarkdown'](arg1);
 }
 
-export function SelectCover() {
-  return window['go']['main']['App']['SelectCover']();
+export function SelectCover(arg1) {
+  return window['go']['main']['App']['SelectCover'](arg1);
 }
 
 export function UpdateChapter(arg1) {
   return window['go']['main']['App']['UpdateChapter'](arg1);
 }
 
-export function UploadImage(arg1) {
-  return window['go']['main']['App']['UploadImage'](arg1);
+export function UploadImage(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UploadImage'](arg1, arg2, arg3);
 }

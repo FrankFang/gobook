@@ -30,8 +30,8 @@ export function PublishBook(arg1:number,arg2:Array<string>,arg3:string,arg4:stri
 
 export function RenderMarkdown(arg1:string):Promise<string>;
 
-export function SelectCover():Promise<string>;
+export function SelectCover(arg1:number):Promise<string>;
 
 export function UpdateChapter(arg1:main.UpdateChapterParams):Promise<main.Chapter>;
 
-export function UploadImage(arg1:string):Promise<string>;
+export function UploadImage(arg1:number,arg2:number,arg3:string):Promise<string>;

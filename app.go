@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
+	cp "github.com/otiai10/copy"
 	"github.com/vincent-petithory/dataurl"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/yuin/goldmark"
@@ -433,7 +434,7 @@ func (a *App) GetChapter(id int64) (Chapter, error) {
 	return chapter, nil
 }
 
-func (a *App) UploadImage(url string) (string, error) {
+func (a *App) UploadImage(bookId, chapterId int64, url string) (string, error) {
 	d, err := dataurl.DecodeString(url)
 	if err != nil {
 		log.Fatalln(err)
@@ -445,7 +446,7 @@ func (a *App) UploadImage(url string) (string, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	dir := filepath.Join(p, "gobook_data", "images")
+	dir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d", bookId), "images")
 	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		log.Fatalln(err)
@@ -455,7 +456,19 @@ func (a *App) UploadImage(url string) (string, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	return "images/" + filename, nil
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	img, err := q.CreateImage(ctx, CreateImageParams{
+		BookID:    &bookId,
+		ChapterID: &chapterId,
+		Slug:      &filename,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return "images/" + *img.Slug, nil
 }
 
 func newMd() goldmark.Markdown {
@@ -483,7 +496,7 @@ func (a *App) RenderMarkdown(source string) (string, error) {
 	return buf.String(), nil
 }
 
-func (a *App) SelectCover() (string, error) {
+func (a *App) SelectCover(bookId int64) (string, error) {
 	cover, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "选择封面",
 		Filters: []runtime.FileFilter{
@@ -502,7 +515,7 @@ func (a *App) SelectCover() (string, error) {
 		log.Fatalln(err)
 	}
 	p, _ := os.Getwd()
-	dir := filepath.Join(p, "gobook_data", "covers")
+	dir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d", bookId), "covers")
 	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		log.Fatalln(err)
@@ -512,7 +525,18 @@ func (a *App) SelectCover() (string, error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	return "covers/" + filename, nil
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	c, err := q.CreateCover(ctx, CreateCoverParams{
+		BookID: &bookId,
+		Slug:   &filename,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return "covers/" + *c.Slug, nil
 }
 
 type ChapterTreeNode struct {
@@ -602,8 +626,12 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 		log.Fatalln(err)
 	}
 	p, _ := os.Getwd()
-	bookDir := filepath.Join(p, "gobook_data", "books", *book.Name)
-	err = os.MkdirAll(bookDir, 0755)
+	outputDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d_output", book.ID), *book.Name)
+	err = os.RemoveAll(outputDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = os.MkdirAll(outputDir, 0755)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -611,20 +639,23 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 	if slices.Contains(format, "markdown") {
 		// 首先用 book 信息创建 index.md
 		sb := strings.Builder{}
-		sb.WriteString(fmt.Sprintf("# %s \n", *book.Name))
-		sb.WriteString(*book.Summary + "\n")
-		sb.WriteString("![封面](" + *book.Cover + ") \n")
+		sb.WriteString(fmt.Sprintf("# %s \n\n", *book.Name))
+		sb.WriteString(fmt.Sprintf("%s \n\n", *book.Summary))
+		sb.WriteString(fmt.Sprintf("![封面](%s)\n\n", *book.Cover))
+		if len(chapters) > 0 {
+			sb.WriteString("## 目录 \n\n")
+		}
 		trees := chapters2Trees(chapters)
 		sortTrees(trees)
-		for _, tree := range trees {
-			sb.WriteString(fmt.Sprintf("## %s\n", *tree.Name))
-		}
-		err = os.WriteFile(filepath.Join(bookDir, "index.md"), []byte(sb.String()), 0644)
+		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, index int, parents []int) {
+			sb.WriteString(strings.Repeat("    ", len(parents)) + fmt.Sprintf("%d. %s\n", index+1, *node.Name))
+		})
+		err = os.WriteFile(filepath.Join(outputDir, "0_index.md"), []byte(sb.String()), 0644)
 		if err != nil {
 			return err
 		}
 		traverseTrees(trees, []int{}, func(node *ChapterTreeNode, i int, parents []int) {
-			chaptersDir := filepath.Join(bookDir, "chapters")
+			chaptersDir := outputDir
 			err := os.MkdirAll(chaptersDir, 0755)
 			if err != nil {
 				log.Fatalln(err)
@@ -639,6 +670,12 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 				log.Fatalln(err)
 			}
 		})
+		fromDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d", book.ID))
+		err := cp.Copy(fromDir, outputDir)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 	}
 	return nil
 
@@ -666,4 +703,43 @@ func (a *App) PublishBook(bookId int64, format []string, summary, cover string) 
 // helpers
 func Ptr[T any](v T) *T {
 	return &v
+}
+
+func ResolveAsset(path string) ([]byte, error) {
+	parts := strings.Split(path, "/")
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid path: %s", path)
+	}
+	q, _, err := createQuery("books.db")
+	if err != nil {
+		return nil, err
+	}
+	kind := parts[0]
+	slug := parts[1]
+	var b []byte
+	switch kind {
+	case "images":
+		img, err := q.GetImageBySlug(ctx, &slug)
+		if err != nil {
+			return nil, err
+		}
+		imgDir := filepath.Join("gobook_data", fmt.Sprintf("book_%d", *img.BookID), "images")
+		imgPath := filepath.Join(imgDir, *img.Slug)
+		b, err = os.ReadFile(imgPath)
+		if err != nil {
+			return nil, err
+		}
+	case "covers":
+		c, err := q.GetCoverBySlug(ctx, &slug)
+		if err != nil {
+			return nil, err
+		}
+		coverDir := filepath.Join("gobook_data", fmt.Sprintf("book_%d", *c.BookID), "covers")
+		coverPath := filepath.Join(coverDir, *c.Slug)
+		b, err = os.ReadFile(coverPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return b, nil
 }

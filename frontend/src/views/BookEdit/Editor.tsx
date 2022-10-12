@@ -6,7 +6,7 @@ import { useBook } from '../../stores/useBook'
 import { UploadImage } from '../../../wailsjs/go/main/App'
 export const Editor: React.FC = () => {
   const { chapters, updateLocalChapter, updateRemoteChapter } = useBook()
-  const { chapterId } = useParams<{ bookId: string; chapterId: string }>()
+  const { chapterId, bookId } = useParams<{ bookId: string; chapterId: string }>()
   const chapter = chapters.find(c => c.id === parseInt(chapterId!))
   const onChange: ChangeEventHandler<HTMLTextAreaElement> = e => {
     const content = e.target.value
@@ -37,7 +37,8 @@ export const Editor: React.FC = () => {
         reader.onload = async e => {
           const dataUrl = e.target?.result
           if (!dataUrl) { return }
-          const relativePath = await UploadImage(dataUrl as string)
+          const relativePath = await UploadImage(
+            parseInt(bookId!), parseInt(chapterId!), dataUrl as string)
           const insert = `![${file.name}](${relativePath})`
           updateLocalChapter(
             parseInt(chapterId!),

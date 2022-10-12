@@ -20,4 +20,3 @@ root.render(
     <HashRouter>{routes}</HashRouter>
   </React.StrictMode>
 )
-

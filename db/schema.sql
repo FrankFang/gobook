@@ -19,4 +19,21 @@ CREATE TABLE IF NOT EXISTS chapters (
   updated_at DATETIME,
   deleted_at DATETIME
 );
+CREATE TABLE IF NOT EXISTS images (
+  id  INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_id INTEGER DEFAULT 0,
+  chapter_id INTEGER DEFAULT 0,
+  slug text,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at DATETIME,
+  deleted_at DATETIME
+);
+CREATE TABLE IF NOT EXISTS covers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  book_id INTEGER DEFAULT 0,
+  slug text,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at DATETIME,
+  deleted_at DATETIME
+);
 

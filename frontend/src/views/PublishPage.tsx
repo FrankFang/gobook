@@ -66,7 +66,8 @@ export const PublishPage: React.FC = () => {
     }
   }
   const onSelectFile = async () => {
-    const cover = await SelectCover()
+    if (bookId === undefined) { return }
+    const cover = await SelectCover(parseInt(bookId))
     setFormData({ ...formData, cover })
   }
   return <Layout

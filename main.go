@@ -26,7 +26,7 @@ func main() {
 		Assets:           staticAssets,
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
-		AssetsHandler:    assets.NewFileLoader(),
+		AssetsHandler:    assets.NewFileLoader(ResolveAsset),
 		LogLevel:         5,
 		Bind: []interface{}{
 			app,

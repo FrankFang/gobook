@@ -30,3 +30,22 @@ type Chapter struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
 }
+
+type Cover struct {
+	ID        int64      `json:"id"`
+	BookID    *int64     `json:"book_id"`
+	Slug      *string    `json:"slug"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+}
+
+type Image struct {
+	ID        int64      `json:"id"`
+	BookID    *int64     `json:"book_id"`
+	ChapterID *int64     `json:"chapter_id"`
+	Slug      *string    `json:"slug"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+}

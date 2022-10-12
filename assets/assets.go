@@ -2,26 +2,23 @@ package assets
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
+type ResolverType = func(path string) ([]byte, error)
 type FileLoader struct {
 	http.Handler
+	resolver ResolverType
 }
 
-func NewFileLoader() *FileLoader {
-	return &FileLoader{}
+func NewFileLoader(resolver ResolverType) *FileLoader {
+	return &FileLoader{resolver: resolver}
 }
 
 func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	var err error
-	requestedFilename := strings.TrimPrefix(req.URL.Path, "/")
-	println("Requesting file:", requestedFilename)
-	wd, _ := os.Getwd()
-	p := filepath.Join(wd, "gobook_data", requestedFilename)
-	fileData, err := os.ReadFile(p)
+	fullPath := strings.TrimPrefix(req.URL.Path, "/")
+	fileData, err := h.resolver(fullPath)
 	if err != nil {
 		res.WriteHeader(http.StatusNotFound)
 	} else {

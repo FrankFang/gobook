@@ -33,9 +33,8 @@ ORDER BY sequence DESC
 LIMIT 1;
 
 -- name: CreateChapter :one
-INSERT INTO chapters ( book_id, name, content, parent_id, sequence
-) VALUES ( ?, ?, ?, ?, ?
-)
+INSERT INTO chapters ( book_id, name, content, parent_id, sequence)
+VALUES ( ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: DeleteChapter :exec

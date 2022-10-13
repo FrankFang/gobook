@@ -34,6 +34,28 @@ func (q *Queries) CreateCover(ctx context.Context, arg CreateCoverParams) (Cover
 	return i, err
 }
 
+const getCoverByBookID = `-- name: GetCoverByBookID :one
+SELECT id, book_id, slug, created_at, updated_at, deleted_at FROM covers
+WHERE book_id = ?
+AND deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetCoverByBookID(ctx context.Context, bookID *int64) (Cover, error) {
+	row := q.db.QueryRowContext(ctx, getCoverByBookID, bookID)
+	var i Cover
+	err := row.Scan(
+		&i.ID,
+		&i.BookID,
+		&i.Slug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getCoverBySlug = `-- name: GetCoverBySlug :one
 SELECT id, book_id, slug, created_at, updated_at, deleted_at FROM covers WHERE slug = ? AND deleted_at IS NULL
 `

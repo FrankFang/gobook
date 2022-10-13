@@ -100,16 +100,11 @@ export const PublishPage: React.FC = () => {
             <div flex gap-x-4 className={hasError(errors.format) ? s.inputError : ''}>
               <label inline-flex gap-x-2>
                 <input type="checkbox" name="format" value="markdown"
-                  checked={formData.format.includes('markdown')} onChange={e => onChange('format', e)} />
+                  checked={true} onChange={e => onChange('format', e)} />
                 Markdown
               </label>
               <label inline-flex gap-x-2>
-                <input type="checkbox" name="format" value="epub"
-                  checked={formData.format.includes('epub')} onChange={e => onChange('format', e)} />
-                EPUB
-              </label>
-              <label inline-flex gap-x-2>
-                <input type="checkbox" name="format" value="web"
+                <input type="checkbox" name="format" value="web" disabled readOnly
                   checked={formData.format.includes('web')} onChange={e => onChange('format', e)} />
                 网页
               </label>

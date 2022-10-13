@@ -11,7 +11,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/wailsapp/wails/v2 v2.0.0
-	github.com/yuin/goldmark v1.4.4
+	github.com/yuin/goldmark v1.5.2
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17
 )
 

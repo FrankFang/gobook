@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -475,7 +476,7 @@ func (a *App) UploadImage(bookId, chapterId int64, url string) (string, error) {
 
 func newMd() goldmark.Markdown {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithExtensions(extension.GFM, extension.CJK),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
@@ -488,9 +489,7 @@ func newMd() goldmark.Markdown {
 }
 
 func (a *App) RenderMarkdown(source string) (string, error) {
-	md := newMd()
 	ctx := parser.NewContext(parser.WithIDs(&myIDs{}))
-	// 把 source 转为 []byte
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(source), &buf, parser.WithContext(ctx)); err != nil {
 		log.Fatalln(err)
@@ -658,18 +657,17 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 	if err != nil {
 		log.Fatalln(err)
 	}
+	trees := chapters2Trees(chapters)
+	sortTrees(trees)
 	p, _ := os.Getwd()
 	outputDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d_output", book.ID), *book.Name)
-	err = os.RemoveAll(outputDir)
-	if err != nil {
-		log.Fatalln(err)
-	}
 	err = os.MkdirAll(outputDir, 0755)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	fromDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d", book.ID))
 	// 如果 params.format 中包含 markdown，则生成 markdown
-	if slices.Contains(format, "markdown") {
+	if true {
 		// 首先用 book 信息创建 index.md
 		sb := strings.Builder{}
 		sb.WriteString(fmt.Sprintf("# %s \n\n", *book.Name))
@@ -678,8 +676,6 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 		if len(chapters) > 0 {
 			sb.WriteString("## 目录 \n\n")
 		}
-		trees := chapters2Trees(chapters)
-		sortTrees(trees)
 		traverseTrees(trees, nil, []int{}, func(params traverseCallbackParams) {
 			prefix := generatePrefix(params.index, params.parents)
 			sb.WriteString(strings.Repeat("    ", len(params.parents)) +
@@ -727,22 +723,44 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 				log.Fatalln(err)
 			}
 		})
-		fromDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d", book.ID))
 		err := cp.Copy(fromDir, outputDir)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		open.Start(outputDir)
 	}
-	if slices.Contains(format, "epub") {
+	if false {
 		e := epub.NewEpub(*book.Name)
 		// Set the author
-		e.SetAuthor("中文")
+		e.SetAuthor(*book.Author)
+		c, err := q.GetCoverByBookID(ctx, &book.ID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		coverPath := filepath.Join(fromDir, "covers", *c.Slug)
+		ext := filepath.Ext(coverPath)
+		epubCoverPath, err := e.AddImage(coverPath, "cover"+ext)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		e.SetCover(epubCoverPath, "")
+		e.SetDescription(*book.Summary)
 
-		// Add a section
-		section1Body := `<h1>中文</h1>
-<p>段落</p>`
-		e.AddSection(section1Body, "第一章", "", "")
+		e.AddSection(fmt.Sprintf(`<img src="../images/%s"/>`, "cover"+ext), "封面", "cover.xhtml", "")
+		e.AddSection(fmt.Sprintf(`<p>%s</p>`, *book.Summary), "简介", "summary.xhtml", "")
+
+		images, err := q.ListImagesForBook(ctx, &book.ID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		for _, img := range images {
+			imgPath := filepath.Join(fromDir, "images", *img.Slug)
+			_, err := e.AddImage(imgPath, *img.Slug)
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+
+		addSectionToEpub(e, trees, 0, "")
 
 		p := filepath.Join(outputDir, *book.Name+".epub")
 		// Write the EPUB
@@ -751,10 +769,38 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 			log.Fatalln(err)
 		}
 	}
+	open.Start(outputDir)
 	return nil
 }
 
+var match = regexp.MustCompile(`!\[(.*?)\]\((images/.+?)\)`)
+var md = newMd()
+
 // helpers
+func addSectionToEpub(e *epub.Epub, trees []*ChapterTreeNode, parentId int64, parentFilename string) {
+	for _, node := range trees {
+		content := match.ReplaceAllString(*node.Content, `![$1](../$2)`)
+		var buf bytes.Buffer
+		if err := md.Convert([]byte(content), &buf); err != nil {
+			log.Fatalln(err)
+		}
+		body := buf.String()
+		var filename string
+		var err error
+		filename, err = e.AddSubSection(parentFilename, body, *node.Name,
+			fmt.Sprintf("%d_%s.xhtml", node.ID, *node.Name), "")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(node.Children) > 0 {
+			if parentFilename == "" {
+				addSectionToEpub(e, node.Children, node.ID, filename)
+			} else {
+				addSectionToEpub(e, node.Children, node.ID, parentFilename)
+			}
+		}
+	}
+}
 func Ptr[T any](v T) *T {
 	return &v
 }

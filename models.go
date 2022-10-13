@@ -9,14 +9,15 @@ import (
 )
 
 type Book struct {
-	ID        int64      `json:"id"`
-	Name      *string    `json:"name"`
-	Author    *string    `json:"author"`
-	Summary   *string    `json:"summary"`
-	Cover     *string    `json:"cover"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at"`
+	ID           int64      `json:"id"`
+	Name         *string    `json:"name"`
+	Author       *string    `json:"author"`
+	Summary      *string    `json:"summary"`
+	Cover        *string    `json:"cover"`
+	AfterPublish *string    `json:"after_publish"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    *time.Time `json:"updated_at"`
+	DeletedAt    *time.Time `json:"deleted_at"`
 }
 
 type Chapter struct {

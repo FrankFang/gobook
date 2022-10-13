@@ -16,6 +16,7 @@ type FData = {
   summary: string
   cover: string
   author: string
+  after_publish: string
 }
 const tryIt = <T extends (...args: any[]) => any>(fn: T): ReturnType<T> | undefined => {
   try {
@@ -40,8 +41,8 @@ export const PublishPage: React.FC = () => {
     ])
     setErrors(errors)
     if (hasError(errors)) { return }
-    const { format, summary, cover, author } = formData
-    await PublishBook(parseInt(bookId!), format, author, summary, cover)
+    const { format, summary, cover, author, after_publish } = formData
+    await PublishBook(parseInt(bookId!), format, author, summary, cover, after_publish)
     window.alert('导出成功')
   }
   const [formData, setFormData] = useState<FData>(() => {
@@ -49,7 +50,7 @@ export const PublishPage: React.FC = () => {
       JSON.parse(localStorage.getItem('publishFormat') ?? '[]') as unknown as FData['format']
     )
     return {
-      format: format ?? [], summary: '', cover: '', author: ''
+      format: ['markdown'], summary: '', cover: '', author: '', after_publish: ''
     }
   })
   useEffect(() => {
@@ -59,18 +60,15 @@ export const PublishPage: React.FC = () => {
       summary: book.summary ?? '',
       cover: book.cover ?? '',
       author: book.author ?? '',
+      after_publish: book.after_publish ?? '',
     })
   }, [book])
   const [errors, setErrors] = useState<ErrorsOf<FData>>({
-    format: [], summary: [], cover: []
+    format: [], summary: [], cover: [], after_publish: []
   })
   const onChange = (key: string, e: ChangeEvent) => {
     if (key === 'format') {
-      const { value: inputValue, checked } = e.target as HTMLInputElement
-      const formatValue = inputValue as unknown as ('markdown' | 'epub' | 'web')
-      const value = checked ? [...formData.format, formatValue] : formData.format.filter(f => f !== formatValue)
-      localStorage.setItem('publishFormat', JSON.stringify(value))
-      setFormData({ ...formData, [key]: value })
+      window.console.log('目前只支持 markdown')
     } else {
       const { value } = (e.target as HTMLTextAreaElement)
       setFormData({ ...formData, [key]: value })
@@ -132,6 +130,15 @@ export const PublishPage: React.FC = () => {
                 : <span>点击选择文件</span>
               }
             </div>
+          </div>
+          <div>
+            <div x-form-label>
+              导出后执行代码 <Error value={errors.after_publish} />
+            </div>
+            <textarea resize-none w-32em h-8em rd-2 p-2 b-1 shadow shadow-inset
+              value={formData.after_publish}
+              className={hasError(errors.after_publish) ? s.inputError : ''}
+              onChange={e => onChange('after_publish', e)} />
           </div>
           <div mt-4>
             <Button type="submit">发布</Button>

@@ -15,7 +15,7 @@ INSERT INTO books (
 ) VALUES (
   ?
 )
-RETURNING id, name, author, summary, cover, created_at, updated_at, deleted_at
+RETURNING id, name, author, summary, cover, after_publish, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) CreateBook(ctx context.Context, name *string) (Book, error) {
@@ -27,6 +27,7 @@ func (q *Queries) CreateBook(ctx context.Context, name *string) (Book, error) {
 		&i.Author,
 		&i.Summary,
 		&i.Cover,
+		&i.AfterPublish,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -46,7 +47,7 @@ func (q *Queries) DeleteBook(ctx context.Context, id int64) error {
 }
 
 const getBook = `-- name: GetBook :one
-SELECT id, name, author, summary, cover, created_at, updated_at, deleted_at FROM books
+SELECT id, name, author, summary, cover, after_publish, created_at, updated_at, deleted_at FROM books
 WHERE id = ? AND deleted_at IS NULL
 `
 
@@ -59,6 +60,7 @@ func (q *Queries) GetBook(ctx context.Context, id int64) (Book, error) {
 		&i.Author,
 		&i.Summary,
 		&i.Cover,
+		&i.AfterPublish,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -67,7 +69,7 @@ func (q *Queries) GetBook(ctx context.Context, id int64) (Book, error) {
 }
 
 const listBooks = `-- name: ListBooks :many
-SELECT id, name, author, summary, cover, created_at, updated_at, deleted_at FROM books
+SELECT id, name, author, summary, cover, after_publish, created_at, updated_at, deleted_at FROM books
 WHERE deleted_at IS NULL
 ORDER BY id
 LIMIT 10 OFFSET ?
@@ -88,6 +90,7 @@ func (q *Queries) ListBooks(ctx context.Context, offset int64) ([]Book, error) {
 			&i.Author,
 			&i.Summary,
 			&i.Cover,
+			&i.AfterPublish,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -110,17 +113,19 @@ UPDATE books
 SET name = coalesce(@name, name),
     summary = coalesce(@summary, summary),
     cover = coalesce(@cover, cover),
-    author = coalesce(@author, author)
+    author = coalesce(@author, author),
+    after_publish = coalesce(@after_publish, after_publish)
 WHERE id = ?
-RETURNING id, name, author, summary, cover, created_at, updated_at, deleted_at
+RETURNING id, name, author, summary, cover, after_publish, created_at, updated_at, deleted_at
 `
 
 type UpdateBookParams struct {
-	Name    *string `json:"name"`
-	Summary *string `json:"summary"`
-	Cover   *string `json:"cover"`
-	Author  *string `json:"author"`
-	ID      int64   `json:"id"`
+	Name         *string `json:"name"`
+	Summary      *string `json:"summary"`
+	Cover        *string `json:"cover"`
+	Author       *string `json:"author"`
+	AfterPublish *string `json:"after_publish"`
+	ID           int64   `json:"id"`
 }
 
 func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) (Book, error) {
@@ -129,6 +134,7 @@ func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) (Book, e
 		arg.Summary,
 		arg.Cover,
 		arg.Author,
+		arg.AfterPublish,
 		arg.ID,
 	)
 	var i Book
@@ -138,6 +144,7 @@ func (q *Queries) UpdateBook(ctx context.Context, arg UpdateBookParams) (Book, e
 		&i.Author,
 		&i.Summary,
 		&i.Cover,
+		&i.AfterPublish,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

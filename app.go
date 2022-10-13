@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -639,16 +640,17 @@ func generatePrefix(i int, parents []int) string {
 	}
 	return prefix
 }
-func (a *App) PublishBook(bookId int64, format []string, author, summary, cover string) error {
+func (a *App) PublishBook(bookId int64, format []string, author, summary, cover, afterPublish string) error {
 	q, _, err := createQuery("books.db")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	book, err := q.UpdateBook(ctx, UpdateBookParams{
-		ID:      bookId,
-		Summary: &summary,
-		Cover:   &cover,
-		Author:  &author,
+		ID:           bookId,
+		Summary:      &summary,
+		Cover:        &cover,
+		Author:       &author,
+		AfterPublish: &afterPublish,
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -660,7 +662,11 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 	trees := chapters2Trees(chapters)
 	sortTrees(trees)
 	p, _ := os.Getwd()
-	outputDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d_output", book.ID), *book.Name)
+	outputDir := filepath.Join(p, "gobook_data", fmt.Sprintf("book_%d_publish", book.ID), *book.Name)
+	err = os.RemoveAll(outputDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	err = os.MkdirAll(outputDir, 0755)
 	if err != nil {
 		log.Fatalln(err)
@@ -685,6 +691,8 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 		if err != nil {
 			return err
 		}
+		os.WriteFile(filepath.Join(outputDir, "README.md"),
+			[]byte(fmt.Sprintf("# %s\n\n[😘开始阅读](./0_index.md)", *book.Name)), 0644)
 		traverseTrees(trees, nil, []int{}, func(params traverseCallbackParams) {
 			chaptersDir := outputDir
 			err := os.MkdirAll(chaptersDir, 0755)
@@ -770,6 +778,17 @@ func (a *App) PublishBook(bookId int64, format []string, author, summary, cover 
 		}
 	}
 	open.Start(outputDir)
+	// 在 outputDir 执行 after_publish 脚本
+	if len(*book.AfterPublish) > 0 {
+		cmd := exec.Command("sh", "-c", *book.AfterPublish)
+		cmd.Dir = outputDir
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
 	return nil
 }
 

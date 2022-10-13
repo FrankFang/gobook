@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS books (
   author text,
   summary text,
   cover text,
+  after_publish text,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at DATETIME,
   deleted_at DATETIME

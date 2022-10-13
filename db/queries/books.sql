@@ -27,6 +27,7 @@ UPDATE books
 SET name = coalesce(@name, name),
     summary = coalesce(@summary, summary),
     cover = coalesce(@cover, cover),
-    author = coalesce(@author, author)
+    author = coalesce(@author, author),
+    after_publish = coalesce(@after_publish, after_publish)
 WHERE id = ?
 RETURNING *;
